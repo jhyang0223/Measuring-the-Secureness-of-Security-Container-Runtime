@@ -13,5 +13,5 @@ RUN apt-get install python3-pip -y
 RUN pip3 install bs4
 
 COPY Crawl.py Crawl.py
-
+ENV PYTHONIOENCODING utf-8
 ENTRYPOINT ["python3", "Crawl.py"]

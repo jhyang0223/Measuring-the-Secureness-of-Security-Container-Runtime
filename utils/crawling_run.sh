@@ -22,3 +22,5 @@ echo "Building container image for" ${program} #>> /dev/null
 (cd ../apps/${program} && sudo docker build -t ${program}:latest . )#>> /dev/null)
 
 sudo docker run -i -t -h ${program} --rm --name ${program} ${program}
+
+sudo docker rm  ${program}
