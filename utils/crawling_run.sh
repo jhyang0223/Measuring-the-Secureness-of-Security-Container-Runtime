@@ -15,12 +15,18 @@ fi
 ###parameter variable zone ###
 
 
-
+HOST_VOLUME_DIR="/opt/volume"
+CONTAINER_VOLUME_DIR="/opt/volume"
 ############
 
 echo "Building container image for" ${program} #>> /dev/null
 (cd ../apps/${program} && sudo docker build -t ${program}:latest . )#>> /dev/null)
 
-sudo docker run -i -t -h ${program} --rm --name ${program} ${program}
+if [[ $(docker ps | grep ${program}) = "${program}" ]]; then
+    sudo docker stop ${program}
+    sudo docker rm ${program}
+fi
 
-sudo docker rm  ${program}
+mkdir -p ${HOST_VOLUME_DIR}
+
+sudo docker run -i -t -h ${program} --rm -v ${HOST_VOLUME_DIR}:${CONTAINER_VOLUME_DIR} --name ${program} ${program}
