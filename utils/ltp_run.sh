@@ -18,7 +18,17 @@ fi
 
 ############
 
-echo "Building container image for" ${program} #>> /dev/null
-(cd ../apps/${program} && sudo docker build -t ${program}:latest . )#>> /dev/null)
+if [[ $(docker ps | grep ${program} | cut -d" " -f9) = "${program}" ]]; then
+    sudo docker stop ${program}
+    sudo docker rm ${program}
+fi
 
-sudo docker run -i -t -h ${program} --name ${program} ${program} /bin/bash
+echo "Building container image for" ${program} #>> /dev/null
+(cd ../apps/${program} && sudo docker build -t ${program}:latest . ) #>> /dev/null)
+
+sudo docker run -i -t -h ${program} --name ${program} ${program}
+
+container_id=$(docker ps | grep ${program} | cut -d" " -f1)
+ltp_pid=$(pgrep container -a | grep ${container_id} | awk '{print $1}')
+
+

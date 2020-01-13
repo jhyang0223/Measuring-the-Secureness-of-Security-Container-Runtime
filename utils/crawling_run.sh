@@ -22,7 +22,7 @@ CONTAINER_VOLUME_DIR="/opt/volume"
 echo "Building container image for" ${program} #>> /dev/null
 (cd ../apps/${program} && sudo docker build -t ${program}:latest . )#>> /dev/null)
 
-if [[ $(docker ps | grep ${program}) = "${program}" ]]; then
+if [[ $(docker ps | grep ${program} | cut -d" " -f9) = "${program}" ]]; then
     sudo docker stop ${program}
     sudo docker rm ${program}
 fi
