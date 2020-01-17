@@ -14,11 +14,5 @@ RUN apt-get install autotools-dev automake unzip autoconf -y
 RUN apt-get install git -y
 ENV PYTHONIOENCODING utf-8
 
-RUN git clone https://github.com/linux-test-project/ltp.git
-
-WORKDIR /ltp/
-RUN make autotools
-RUN ./configure
-RUN make
-RUN make install
+RUN apt-get install bonnie++
 
