@@ -35,7 +35,7 @@ ltp_pid=$(pgrep container -a | grep ${container_id} | awk '{print $1}')
 
 tool_name=""
 if [[ ${IOTYPE} == "fs" ]]; then
-    sudo docker exec -dt ${program} bash -c "bonnie++ -d /opt/ -s 2048:1024 -n 100 -m `hostname` -r 1024 -u0:0"
+    sudo docker exec -dt ${program} bash -c "./test_script.sh"
 
     tool_name="bonnie"
 elif [[ ${IOTYPE} == "net" ]]; then
@@ -67,4 +67,4 @@ echo ""
 sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
 
 #save trace file
-cp /sys/kernel/debug/tracing/trace /opt/volume/${IOTYPE}_trace.txt
+cp /sys/kernel/debug/tracing/trace /opt/volume/${IOTYPE}_ftrace.txt

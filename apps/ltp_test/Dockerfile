@@ -16,3 +16,13 @@ ENV PYTHONIOENCODING utf-8
 
 RUN apt-get install bonnie++
 
+RUN git clone https://github.com/linux-test-project/ltp.git
+
+WORKDIR /ltp/
+RUN make autotools
+RUN ./configure
+RUN make
+RUN make install
+
+COPY test_script.sh test_script.sh
+RUN chmod 755 test_script.sh
