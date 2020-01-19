@@ -10,14 +10,19 @@ RUN apt-get install vim -y
 RUN apt-get install net-tools -y
 RUN apt-get install python-pip -y
 RUN apt-get install python3-pip -y
-
 RUN apt-get install autotools-dev automake unzip autoconf -y
-COPY ltp/ ltp/
-
+RUN apt-get install git -y
 ENV PYTHONIOENCODING utf-8
 
-WORKDIR /ltp
+RUN apt-get install bonnie++
+
+RUN git clone https://github.com/linux-test-project/ltp.git
+
+WORKDIR /ltp/
 RUN make autotools
 RUN ./configure
 RUN make
 RUN make install
+
+COPY test_script.sh test_script.sh
+RUN chmod 755 test_script.sh
