@@ -29,12 +29,12 @@ def GetFuncNamefromStrace(path):
     straceSet = set()    
     straceFile = open(path,"r")
 
-    #lFormat = re.compile("")
+    lFormat = re.compile("[0-9]* ([a-zA-Z0-9_]*)\(.*")
     for line in straceFile:
         searchRet = lFormat.search(line.strip("\n"))
         if searchRet is not None :
-            straceSet.update([searchRet.group(1),searchRet.group(2)])
-    ftraceFile.close()
+            straceSet.add(searchRet.group(1))
+    straceFile.close()
     return straceSet
 
 #compare trace function name set and 
@@ -56,12 +56,13 @@ def GetIOScore(_type,funcStrList):
     ftraceSet = GetFuncNamefromFtrace(ftraceFilePath)
     ftraceFuncCount = len(ftraceSet)
     ftraceVulnerableCount = GetVulnerableFuncCount(ftraceSet,funcStrList)
+    
+    print("end ftrace analysis")
     #processing strace result
-    #straceFilePath = "/opt/volume/"+_type+"_strace.txt"
-    #straceSet = GetFuncNamefromStrace(ftraceFilePath)
-    #straceFuncCount = len(straceSet)
-    straceFuncCount = 0 #len(straceSet)
-    straceVulnerableCount = 0 #GetVulnerableFuncCount(straceSet, funcStrList)
+    straceFilePath = "/opt/volume/"+_type+"_strace.txt"
+    straceSet = GetFuncNamefromStrace(straceFilePath)
+    straceFuncCount = len(straceSet)
+    straceVulnerableCount = GetVulnerableFuncCount(straceSet, funcStrList)
     
     #calculation equation
     ioScore =(ftraceVulnerableCount + straceVulnerableCount)/(ftraceFuncCount + straceFuncCount)
@@ -70,6 +71,8 @@ def GetIOScore(_type,funcStrList):
     print("ftraceFuncCount:", ftraceFuncCount)
     print("ftraceVulnerableCount:",ftraceVulnerableCount)
     print("funcStrList:",len(funcStrList))
+    print("straceFuncCount:",straceFuncCount)
+    print("straceVulnerableCount:",straceVulnerableCount)
     return ioScore
 
 #main
