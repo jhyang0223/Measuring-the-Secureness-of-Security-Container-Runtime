@@ -14,7 +14,7 @@ RUN apt-get install autotools-dev automake unzip autoconf -y
 RUN apt-get install git -y
 ENV PYTHONIOENCODING utf-8
 
-RUN apt-get install bonnie++
+RUN apt-get install netperf -y
 
 RUN git clone https://github.com/linux-test-project/ltp.git
 
