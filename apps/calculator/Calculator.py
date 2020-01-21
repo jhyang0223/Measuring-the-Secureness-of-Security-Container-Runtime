@@ -51,13 +51,14 @@ def GetVulnerableFuncCount(traceSet, funcStrList):
 
 #load ftrace file and get 
 def GetIOScore(_type,funcStrList):
+    print("start ftrace analysis")
     #processing ftrace result
     ftraceFilePath = "/opt/volume/"+_type+"_ftrace.txt"
     ftraceSet = GetFuncNamefromFtrace(ftraceFilePath)
     ftraceFuncCount = len(ftraceSet)
     ftraceVulnerableCount = GetVulnerableFuncCount(ftraceSet,funcStrList)
     
-    print("end ftrace analysis")
+    print("start strace analysis")
     #processing strace result
     straceFilePath = "/opt/volume/"+_type+"_strace.txt"
     straceSet = GetFuncNamefromStrace(straceFilePath)
@@ -79,6 +80,7 @@ def GetIOScore(_type,funcStrList):
 if __name__== "__main__":
     funcStrList = list(set(GetFuncStrList("/opt/volume/funcStrList.sav")))
     
+    print("start fs scoring")
     fsScore  = GetIOScore("fs",funcStrList)
-    
-    #netScore = GetIOScore("net",funcStrList)
+    print("start net scoring")    
+    netScore = GetIOScore("net",funcStrList)

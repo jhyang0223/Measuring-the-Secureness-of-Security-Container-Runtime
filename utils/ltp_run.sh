@@ -44,6 +44,7 @@ sudo echo function-fork > /sys/kernel/debug/tracing/trace_options
 
 #strace setting
 test_script_pid=$(ps -el | grep ${ltp_pid} | grep wait | awk '{print $4}')
+echo ${test_script_pid}
 #ftrace start
 sudo echo 1 > /sys/kernel/debug/tracing/tracing_on
 #strace start
@@ -60,6 +61,6 @@ strace -f -p ${test_script_pid} -o /opt/volume/${IOTYPE}_strace.txt
 
 #ftrace off
 sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
-
+echo "ftrace off"
 #save trace file
 cp /sys/kernel/debug/tracing/trace /opt/volume/${IOTYPE}_ftrace.txt
