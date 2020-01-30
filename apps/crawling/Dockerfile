@@ -11,7 +11,20 @@ RUN apt-get install net-tools -y
 RUN apt-get install python-pip -y
 RUN apt-get install python3-pip -y
 RUN pip3 install bs4
+RUN apt-get install git -y
 
-COPY Crawl.py Crawl.py
+
+RUN git clone https://github.com/offensive-security/exploitdb.git /opt/exploit-database
+RUN ln -sf /opt/exploit-database/searchsploit /usr/local/bin/searchsploit
+RUN cp -n /opt/exploit-database/.searchsploit_rc ~/
+
+RUN apt-get update -y
+RUN apt-get upgrade -y
+
+WORKDIR /opt/exploitdb
+
+COPY Crawl.py /root/Crawl.py
 ENV PYTHONIOENCODING utf-8
-ENTRYPOINT ["python3", "Crawl.py"]
+
+
+ENTRYPOINT ["python3", "/root/Crawl.py"]

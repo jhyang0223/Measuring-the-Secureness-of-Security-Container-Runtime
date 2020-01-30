@@ -5,7 +5,9 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import pickle
-
+import subprocess
+import io
+################################################################################################################
 def CreateCVE_DescDict():
     dataDict=dict()
     
@@ -53,19 +55,48 @@ def ExtractFuncStr(dataDict):
 def SaveFuncStrList(funcStrList):
     with open("/opt/volume/funcStrList.sav","wb") as f:
         pickle.dump(funcStrList, f)
+################################################################################################################
+###-------------------------upper functions are cve crawling functions they are not used.--------------------###
+################################################################################################################
 
+#searchsploit searching with keyword 'Linux Kernel' and get title string, function strings
+def InitExploitDict():
+    exploitDict = dict()
+    
+    #exploit db update
+    os.system("searchsploit -u")
+    #get result of command(searchsploit linux kernel)
+    cmd = 'searchsploit -w linux kernel | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
+    ccmd = 'searchsploit -w linux kernel | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g" > /opt/volume/test.txt'
+    os.system(ccmd)
+    searchResult = subprocess.check_output(cmd,shell=True).decode().strip("\n")
+#    searchResultIO = searchResult.split("\n")
+    searchResultIO = io.StringIO(searchResult)
+    
+    lFormat = re.compile('Linux Kernel(.*) - (.*)\| (.*\/([0-9]*))',re.I)
+    for line in searchResultIO.readlines():
+        searchRet = lFormat.search(line.strip("\n"))
+        if searchRet is not None:
+            version = searchRet.group(1)
+            title = searchRet.group(2).strip(" ")
+            codePath = searchRet.group(3).strip(" ")
+            exploitID = searchRet.group(4)
+
+            exploitDict[exploitID] = dict()
+            exploitDict[exploitID]['title'] = title
+            exploitDict[exploitID]['codePath'] = codePath
+            exploitDict[exploitID]['version'] = version
+    return exploitDict
+
+def SaveExploitDict(exploitDict,path):
+    with open(path,"wb") as f:
+        pickle.dump(exploitDict, f)
 #main
 if __name__ == "__main__":
-    if os.path.exists("/opt/volume/dataDict.sav"):
-        with open("/opt/volume/dataDict.sav","rb") as f:
-            dataDict = pickle.load(f)
-    else:
-        dataDict = CreateCVE_DescDict()
+   # if os.path.exists("/opt/volume/dataDict.sav"):
+   #     with open("/opt/volume/dataDict.sav","rb") as f:
+   #         exploitDict = pickle.load(f)
+   # else:
+    initDict = InitExploitDict()
 
-    cutDataDict = Cutin5years(dataDict)
-    
-        
-    funcStrList = ExtractFuncStr(cutDataDict)
-    print(funcStrList)
-
-    SaveFuncStrList(funcStrList)
+    SaveExploitDict(initDict, "/opt/volume/initDict.sav")
