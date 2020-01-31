@@ -29,4 +29,4 @@ fi
 
 mkdir -p ${HOST_VOLUME_DIR}
 
-sudo docker run -i -t --rm -h ${program}  -v ${HOST_VOLUME_DIR}:${CONTAINER_VOLUME_DIR} --name ${program} ${program}
+sudo docker run -i -t -h ${program} --rm -v ${HOST_VOLUME_DIR}:${CONTAINER_VOLUME_DIR} --name ${program} ${program}
