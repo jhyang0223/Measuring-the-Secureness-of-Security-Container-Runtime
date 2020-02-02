@@ -19,10 +19,10 @@ HOST_VOLUME_DIR="/opt/volume"
 CONTAINER_VOLUME_DIR="/opt/volume"
 ############
 
-echo "Building container image for" ${program} #>> /dev/null
-(cd ../apps/${program} && sudo docker build -t ${program}:latest . )#>> /dev/null)
+echo "Building container image for" ${program}
+cd ../apps/${program} && sudo docker build -t ${program}:latest . 
 
-if [[ $(docker ps | grep ${program} | cut -d" " -f9) = "${program}" ]]; then
+if [[ $(docker ps -a | grep ${program} | awk '{print $2}') = "${program}" ]]; then
     sudo docker stop ${program}
     sudo docker rm ${program}
 fi
