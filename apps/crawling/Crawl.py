@@ -213,12 +213,11 @@ def AddCrawlingInfo2Dict(initDict):
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
     
     exploitDict = copy.deepcopy(initDict)
-
+    freqDict=dict()
     #linux system call list in docker
     linux_syscallList = GetLinuxSyscallList()
     #regular expression to get cve name from exploit code web page
     cveFormat = re.compile('.*(CVE-[0-9]*-[0-9]*).*',re.I)
-    
     #loop for each exploit ID 
     for exploitID, informDict in exploitDict.items():
         #for save found systemcall string in the exploit information
@@ -252,6 +251,20 @@ def AddCrawlingInfo2Dict(initDict):
         #add sytemcall string list, related cve name to exploit dict
         exploitDict[exploitID]['syscallStrList'] = list(set(syscallStrList))
         print("    related system call : ", exploitDict[exploitID]['syscallStrList'])
+
+        #count system call frequency
+        for syscall  in exploitDict[exploitID]['syscallStrList']:
+            if freqDict.get(syscall)==None:
+                freqDict[syscall] = 0
+            freqDict[syscall] += 1
+
+    #sort system call frequency dict
+    sortedFreqDict = sorted(freqDict.items(),key=(lambda x:x[1]),reverse=True)
+    
+    print("exploit count:",len(exploitDict))
+    for key,value in sortedFreqDict:
+        print(key,"-",value)
+    
     return exploitDict
 
 
