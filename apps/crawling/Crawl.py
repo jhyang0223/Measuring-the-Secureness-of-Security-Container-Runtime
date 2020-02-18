@@ -285,13 +285,12 @@ if __name__ == "__main__":
         os.system("rm /opt/volume/initDict*")
         SaveExploitDict(initDict, initDictPath)
     
-    exploitDict = AddCrawlingInfo2Dict(initDict)
     exploitDictPath = "/opt/volume/exploitDict_"+today+".sav"
 
-#    if os.path.exists(exploitDictPath):
-#        with open(exploitDictPath,"rb") as f:
-#            exploitDict = pickle.load(f)
-#    else:
-#        exploitDict = AddCrawlingInfo2Dict(initDict)
-#        os.system("rm /opt/volume/exploitDict*")
-#        SaveExploitDict(exploitDict, exploitDictPath)
+    if os.path.exists(exploitDictPath):
+        with open(exploitDictPath,"rb") as f:
+            exploitDict = pickle.load(f)
+    else:
+        exploitDict = AddCrawlingInfo2Dict(initDict)
+        os.system("rm /opt/volume/exploitDict*")
+        SaveExploitDict(exploitDict, exploitDictPath)

@@ -3,13 +3,13 @@ import os
 import sys
 import re
 import pickle
-
-#get function name string list from pickle save file
-def GetFuncStrList(path):
+from datetime import datetime
+#get exploit dictionary from pickle save file
+def GetExploitDict(path):
     with open(path,"rb") as f:
-        funcStrList = pickle.load(f)
+        exploitDict = pickle.load(f)
 
-    return funcStrList
+    return exploitDict
 
 #convert ftrace result to function name set
 def GetFuncNamefromFtrace(path):
@@ -50,23 +50,40 @@ def GetVulnerableFuncCount(traceSet, funcStrList):
     return funcCount
 
 #load ftrace file and get 
-def GetIOScore(_type,funcStrList):
+def GetScore(funcStrList):
+    print("##Start Network Test Program")
     print("start ftrace analysis")
     #processing ftrace result
-    ftraceFilePath = "/opt/volume/"+_type+"_ftrace.txt"
+    ftraceFilePath = "/opt/volume/net_ftrace.txt"
     ftraceSet = GetFuncNamefromFtrace(ftraceFilePath)
     ftraceFuncCount = len(ftraceSet)
     ftraceVulnerableCount = GetVulnerableFuncCount(ftraceSet,funcStrList)
     
     print("start strace analysis")
     #processing strace result
-    straceFilePath = "/opt/volume/"+_type+"_strace.txt"
+    straceFilePath = "/opt/volume/net_strace.txt"
     straceSet = GetFuncNamefromStrace(straceFilePath)
     straceFuncCount = len(straceSet)
     straceVulnerableCount = GetVulnerableFuncCount(straceSet, funcStrList)
     
+    print("##Start FS Test Program")
+    print("start ftrace analysis")
+    #processing ftrace result
+    ftraceFilePath = "/opt/volume/fs_ftrace.txt"
+    ftraceSet = GetFuncNamefromFtrace(ftraceFilePath)
+    ftraceFuncCount = len(ftraceSet)
+    ftraceVulnerableCount = GetVulnerableFuncCount(ftraceSet,funcStrList)
+
+    print("start strace analysis")
+    #processing strace result
+    straceFilePath = "/opt/volume/fs_strace.txt"
+    straceSet = GetFuncNamefromStrace(straceFilePath)
+    straceFuncCount = len(straceSet)
+    straceVulnerableCount = GetVulnerableFuncCount(straceSet, funcStrList)
+
+    
     #calculation equation
-    ioScore =(ftraceVulnerableCount + straceVulnerableCount)/(ftraceFuncCount + straceFuncCount)
+    ioScore =0
 
     #debug
     print("ftraceFuncCount:", ftraceFuncCount)
@@ -78,9 +95,10 @@ def GetIOScore(_type,funcStrList):
 
 #main
 if __name__== "__main__":
-    funcStrList = list(set(GetFuncStrList("/opt/volume/funcStrList.sav")))
+    today = datetime.today().strftime("%Y%m%d")
+
+    exploitDictPath = "/opt/volume/exploitDict_"+today+".sav"
+    exploitDict = GetExploitDict(exploitDictPath)
     
-    print("start fs scoring")
-    fsScore  = GetIOScore("fs",funcStrList)
-    print("start net scoring")    
-    netScore = GetIOScore("net",funcStrList)
+    score  = GetScore(list())
+    print(score)
