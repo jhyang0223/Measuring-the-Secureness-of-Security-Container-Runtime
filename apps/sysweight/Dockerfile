@@ -17,6 +17,7 @@ RUN apt-get update -y
 RUN apt-get upgrade -y
 
 RUN pip3 install pandas
+RUN pip3 install numpy
 COPY Sysweight.py /root/Sysweight.py
 ENV PYTHONIOENCODING utf-8
 

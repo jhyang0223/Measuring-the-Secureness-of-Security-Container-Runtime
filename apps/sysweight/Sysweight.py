@@ -9,6 +9,7 @@ import io
 from datetime import datetime
 import pandas as pd
 from math import log
+import numpy as np
 
 #Make CVE document dictionary for system call weight
 def MakeCVEdocDict(exploitDict):
@@ -85,7 +86,7 @@ def GetTFIDF(CVEdocDict):
             word = wordList[j]
             tfidfResult[-1].append(TFIDF(word,doc,docs,N))
     tfidfFrame = pd.DataFrame(tfidfResult,columns=wordList)
-    print(tfidfFrame.mean(axis=0).sort_values())
+    print(tfidfFrame.replace(0,np.NaN).mean(axis=0).sort_values())
     
     return sysweightDict
 #save system call weight dict to pickle save file
