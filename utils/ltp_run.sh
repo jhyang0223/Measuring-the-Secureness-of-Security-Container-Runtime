@@ -48,7 +48,7 @@ echo ${test_script_pid}
 #ftrace start
 sudo echo 1 > /sys/kernel/debug/tracing/tracing_on
 #strace start
-strace -f -p ${test_script_pid} -o /opt/volume/${IOTYPE}_strace.txt
+strace -fF -p ${test_script_pid} -o /opt/volume/${IOTYPE}_strace.txt
 
 #wait bench tool exit
 #echo "wait test program exit"
