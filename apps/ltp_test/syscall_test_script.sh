@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 
 
@@ -9,7 +9,7 @@ do
     for program in  $(ls -l testcases/kernel/syscalls/${syscall}/ | grep rwx | cut -d" " -f 9)
     do
         echo testcases/kernel/syscalls/${syscall}/${program}
-        if [[ ${program} == "inotify09" ]] || [[ ${program} == "creat05" ]] ; then
+        if [[ ${program} == "inotify09" ]] || [[ ${program} == "creat05" ]] || [[ ${program} == "keyctl01" ]]; then
             echo no execute ${program}
         else
             testcases/kernel/syscalls/${syscall}/${program}
