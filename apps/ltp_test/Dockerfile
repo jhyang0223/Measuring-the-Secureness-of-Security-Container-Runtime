@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM python:3.8
 
 MAINTAINER Jihyeok Yang <flash3470@gmail.com>
 
@@ -14,8 +14,6 @@ RUN apt-get install autotools-dev automake unzip autoconf -y
 RUN apt-get install git -y
 ENV PYTHONIOENCODING utf-8
 
-RUN apt-get install netperf -y
-
 RUN git clone https://github.com/linux-test-project/ltp.git
 
 WORKDIR /ltp/
@@ -24,5 +22,14 @@ RUN ./configure
 RUN make
 RUN make install
 
+RUN apt-get install strace -y
+
+RUN python3 -m pip install strace-parser
 COPY test_script.sh test_script.sh
+COPY syscall_test_script.sh syscall_test_script.sh
+COPY avail_syscall.py avail_syscall.py
+COPY grammar.txt grammar.txt
 RUN chmod 755 test_script.sh
+RUN chmod 755 syscall_test_script.sh
+
+
