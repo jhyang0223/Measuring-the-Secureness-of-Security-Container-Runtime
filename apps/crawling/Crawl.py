@@ -8,59 +8,16 @@ import pickle
 import subprocess
 import io
 from datetime import datetime
+
 import copy
 
-################################################################################################################
-def CreateCVE_DescDict():
-    dataDict=dict()
-    
-    #get html file of cve data (mitre)
-    dataSet = requests.get("https://cve.mitre.org/data/downloads/allitems.html")
+import pandas as pd
+from math import log
+import numpy as np
 
-    #get cve name list and cve description by using beautifulsoup
-    soup = BeautifulSoup(dataSet.content, 'html.parser')
-    allTitle = soup.find_all('font',attrs={'size':'+2'})
-    allDescription = soup.find_all('p')
-
-    #match cve name - description and make name:description dictionary
-    print(len(allTitle))
-    for i in range(0,len(allTitle)):
-        name = allTitle[i].b.text.replace("Name: ","")
-        description = allDescription[i+2].text
-        dataDict[name] = description
-
-    #save pickle
-    with open('/opt/volume/dataDict.sav',"wb") as f:
-        pickle.dump(dataDict, f)
-
-    #return Dictionary
-    return dataDict
-
-#To cut before 2015 cve data
-def Cutin5years(dataDict):
-    return dataDict   
-
-#extract function name string from cve description
-def ExtractFuncStr(dataDict):
-    funcStrList = list()
-
-    funcRegex= re.compile("[A-Za-z0-9]*\(\)")
-    
-    for description in dataDict.values():
-        oneDescFunc = funcRegex.findall(description)
-        if oneDescFunc:
-            for funcStr in oneDescFunc:
-                funcStrList.append(funcStr)
-            
-    return funcStrList
-
-#save funcStrList for using it as ftrace function list
-def SaveFuncStrList(funcStrList):
-    with open("/opt/volume/funcStrList.sav","wb") as f:
-        pickle.dump(funcStrList, f)
-################################################################################################################
-###-------------------------upper functions are cve crawling functions they are not used.--------------------###
-################################################################################################################
+#####################################################################################
+###-------------------------CVE Information Crawling functions--------------------###
+#####################################################################################
 
 #searchsploit searching with keyword 'Linux Kernel' and get title string, function strings
 def InitExploitDict():
@@ -173,12 +130,14 @@ def FindCVEDescSyscallStrList(cveName, linux_syscallList):
         funcStrList.append(funcStr.split("_")[1])
 
     #debug
-#    print("    cve description data ...")
+    print("    cve description data:", cveDesc)
 #    print("        functionList : ",funcStrList)
     syscallStrList = FigureSyscall(funcStrList,linux_syscallList)
     syscallStrList.extend(FigureSyscall(cveDesc.split(" "),linux_syscallList))
     #debug
 #    print("        syscallStrList : ", syscallStrList)
+    if "RESERVED" in cveDesc:
+        syscallStrList = ["RESERVED"]
     return syscallStrList
 
 #find system calls in exploit title and return refered system call to list
@@ -212,6 +171,7 @@ def AddCrawlingInfo2Dict(initDict):
     #fake header to get reponse packet from web site
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
     
+    exploitIDwithoutCVE = list()
     exploitDict = copy.deepcopy(initDict)
     freqDict=dict()
     #linux system call list in docker
@@ -232,6 +192,10 @@ def AddCrawlingInfo2Dict(initDict):
         relatedCVE = ''
         if searchRet is not None :
             relatedCVE = searchRet.group(1)
+        else:
+            exploitIDwithoutCVE.append(exploitID)
+            continue
+
         exploitDict[exploitID]['relatedCVE'] = relatedCVE
         
         #debug
@@ -243,13 +207,21 @@ def AddCrawlingInfo2Dict(initDict):
         
         #find system calls in cve description and add to list
         if relatedCVE != "":
-            syscallStrList.extend(FindCVEDescSyscallStrList(relatedCVE,linux_syscallList))
+            descSyscallStrList  = FindCVEDescSyscallStrList(relatedCVE,linux_syscallList)
+            if "RESERVED" in descSyscallStrList:
+                print("RESERVED",exploitID)
+                exploitIDwithoutCVE.append(exploitID)
+            syscallStrList.extend(descSyscallStrList)
         #find system calls in exploit title
         exploitTitle = informDict['title']
         syscallStrList.extend(FindTitleSyscallStrList(exploitTitle,linux_syscallList))
 
         #add sytemcall string list, related cve name to exploit dict
         exploitDict[exploitID]['syscallStrList'] = list(set(syscallStrList))
+       
+        if len(exploitDict[exploitID]['syscallStrList']) == 0 :
+            print(exploitID,exploitDict[exploitID]['syscallStrList'])
+            exploitIDwithoutCVE.append(exploitID)
         print("    related system call : ", exploitDict[exploitID]['syscallStrList'])
 
         #count system call frequency
@@ -260,7 +232,9 @@ def AddCrawlingInfo2Dict(initDict):
 
     #sort system call frequency dict
     sortedFreqDict = sorted(freqDict.items(),key=(lambda x:x[1]),reverse=True)
-    
+   
+    for exploitID in exploitIDwithoutCVE:
+        del exploitDict[exploitID]
     print("exploit count:",len(exploitDict))
     for key,value in sortedFreqDict:
         print(key,"-",value)
@@ -272,10 +246,146 @@ def AddCrawlingInfo2Dict(initDict):
 def SaveExploitDict(exploitDict,path):
     with open(path,"wb") as f:
         pickle.dump(exploitDict, f)
+
+##################################################################################
+###-------------------------System Call Weighting functions--------------------###
+##################################################################################
+
+#Make CVE document dictionary for system call weight
+def MakeCVEdocDict(exploitDict):
+    CVEdocDict = dict()
+    for exploitID, informDict in exploitDict.items():
+        syscallDoc = ''
+        relatedCVE = ''
+        for syscall  in informDict['syscallStrList']:
+            syscallDoc += syscall +" "
+        if informDict['relatedCVE'] !='':
+            relatedCVE = informDict['relatedCVE']
+        else:
+            relatedCVE = exploitID
+        
+        if CVEdocDict.get(relatedCVE) == None :
+            CVEdocDict[relatedCVE] = ''
+        
+        CVEdocDict[relatedCVE] +=syscallDoc
+
+    return CVEdocDict
+
+def IsPatched(patchUrl):
+    if patchUrl == None:
+        return None
+    else: 
+        return patchUrl.replace("https","http")
+
+#month delta
+def PublishTimeDelta(publishDate):
+    publishDateObj = datetime.strptime(publishDate,"%Y-%m-%d")
+    print(publishDateObj)
+    diff = datetime.now() - publishDateObj
+    print(diff.days)
+    timeWeight = diff.days//12
+    return timeWeight
+
+def MakeCVEWeightDict(cveList):
+    cveWeightDict = dict()
+    for cve in cveList:
+        webSite = "http://www.cvedetails.com/cve/"+cve
+        pathHtml = requests.get(webSite)
+        print(cve)
+        soup = BeautifulSoup(pathHtml.content,'html.parser') 
+        cvssScore = soup.find('div','cvssbox').string
+        dateNote = soup.find('span',"datenote").string
+        publishDate = re.search("Publish Date : ([0-9]+-[0-9]+-[0-9]+)",dateNote).group(1)
+        timeWeight = 1.0/float(PublishTimeDelta(publishDate))
+            
+        cveWeightDict[cve] = float(cvssScore) #* timeWeight
+    return cveWeightDict
+        
+def TF(word, doc):
+    return doc.count(word)
+
+def TF_test(wordList,docs,N):
+    tfResult = list()
+    for i in range(N):
+        tfResult.append(list())
+        doc = docs[i]
+        for j in range(len(wordList)):
+            word = wordList[j]
+            tfResult[-1].append(TF(word,doc))
+    tfFrame = pd.DataFrame(tfResult,columns = wordList)
+    return tfFrame
+
+def IDF(word,docs,N):
+    df = 0
+    for doc in docs:
+        df += word in doc
+    return log(N/(df+1))
+
+def IDF_test(wordList,docs,N):
+    idfResult = list()
+    for j in range(len(wordList)):
+        word = wordList[j]
+        idfResult.append(IDF(word,docs,N))
+    idfFrame = pd.DataFrame(idfResult,index = wordList,columns=['IDF'])
+    return idfFrame
+
+def TFIDF(word, doc, docs,N):
+    return TF(word,doc) * IDF (word, docs,N)
+
+def GetTFIDF(CVEdocDict,CVEWeightDict):
+    N = len(CVEdocDict)
+    tfResult = list()
+    cveList = list(CVEdocDict.keys())
+    docs = list(CVEdocDict.values())
+    
+    wordList = list(set(word for doc in docs for word in doc.split())) # system call list
+    wordList.sort()
+    
+    sysweightDict = dict()
+    sysweightNoTimeDict = dict()
+    tfFrame = TF_test(wordList,docs,N)
+    #print(tfFrame)
+
+    idfFrame = IDF_test(wordList,docs,N)
+        
+#    print(idfFrame.sort_values(by=['IDF']))
+    tfidfResult = list()
+    tfidfntResult = list()
+    for i in range(N):
+        tfidfResult.append([])
+        tfidfntResult.append([])
+        doc = docs[i]
+        for j in range(len(wordList)):
+            word = wordList[j]
+            tfidf = TFIDF(word,doc,docs,N)
+            syscallWeight = CVEWeightDict[cveList[i]] * tfidf
+            tfidfResult[-1].append(syscallWeight)
+            tfidfntResult[-1].append(tfidf)
+    tfidfFrame = pd.DataFrame(tfidfResult,columns=wordList)
+    tfidfntFrame = pd.DataFrame(tfidfntResult,columns=wordList)
+    sysweightDict = tfidfFrame.mean(axis=0).to_dict()
+
+    print("without time weight-----------------")
+    print(tfidfntFrame.mean(axis=0).sort_values())
+
+    print("with time weight-----------------")
+    print(tfidfFrame.mean(axis=0).sort_values())
+    print("?",sysweightDict)
+    
+#    print(tfidfFrame)
+    
+    return sysweightDict
+
+#save system call weight dict to pickle save file
+def SaveSysweightDict(sysweightDict,path):
+    with open(path,"wb") as f:
+        pickle.dump(sysweightDict, f)
+
 #main
 if __name__ == "__main__":
     today = datetime.today().strftime("%Y%m%d")
     
+    ######Crawling Part######
     initDictPath = "/opt/volume/initDict_"+today+".sav"
     if os.path.exists(initDictPath):
         with open(initDictPath,"rb") as f:
@@ -294,3 +404,12 @@ if __name__ == "__main__":
         exploitDict = AddCrawlingInfo2Dict(initDict)
         os.system("rm /opt/volume/exploitDict*")
         SaveExploitDict(exploitDict, exploitDictPath)
+
+    ####System Call Weight Part####
+    pd.set_option('display.max_rows', None)    
+    CVEdocDict = MakeCVEdocDict(exploitDict)
+    CVEWeightDict = MakeCVEWeightDict(list(CVEdocDict.keys()))
+    sysweightDict = GetTFIDF(CVEdocDict,CVEWeightDict)
+            
+    sysweightDictPath = "/opt/volume/sysweightDict_"+today+".sav"
+    SaveSysweightDict(sysweightDict,sysweightDictPath)

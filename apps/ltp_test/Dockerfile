@@ -25,11 +25,12 @@ RUN make install
 RUN apt-get install strace -y
 
 RUN python3 -m pip install strace-parser
-COPY test_script.sh test_script.sh
-COPY syscall_test_script.sh syscall_test_script.sh
+COPY syscall_test_script_in_container.sh syscall_test_script_in_container.sh
+COPY syscall_test_script_in_host.sh syscall_test_script_in_host.sh
+COPY syscall_list.sh syscall_list.sh
 COPY avail_syscall.py avail_syscall.py
 COPY grammar.txt grammar.txt
-RUN chmod 755 test_script.sh
-RUN chmod 755 syscall_test_script.sh
-
-
+RUN chmod 755 syscall_test_script_in_container.sh
+RUN chmod 755 syscall_test_script_in_host.sh
+RUN chmod 755 syscall_list.sh
+CMD ["/bin/bash"]

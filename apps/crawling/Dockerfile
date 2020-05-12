@@ -21,6 +21,9 @@ RUN cp -n /opt/exploit-database/.searchsploit_rc ~/
 RUN apt-get update -y
 RUN apt-get upgrade -y
 
+RUN pip3 --default-timeout=10000 install pandas
+RUN pip3 --default-timeout=10000 install numpy
+
 WORKDIR /opt/exploitdb
 
 COPY Crawl.py /root/Crawl.py
