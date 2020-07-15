@@ -84,25 +84,19 @@ def FuncInstDataCleansing(funcInstDict):
                                 break
                             i+=1
                         sysInst = 0
-                        
-                        
-                
-               
     return funcInfoDict
 
-def PrintUsedSyscall(funcInfo,funcInfoDict,calledLibCallList):
-    print("\t system call : ",end="")
+def PrintUsedSyscall(funcInfo,funcInfoDict,calledLibCallList,usedSyscallSet):
     if funcInfo['sysBool'] != 0:
         for syscall in funcInfo['syscall']:
-            print(syscall,end=',')
-    print('\n')
+            usedSyscallSet.add(syscall)
     for libcall in funcInfo['pointer']:
         if libcall != '__libc_resp':
             if libcall in calledLibCallList:
                 continue
-            print(libcall)
+            
             calledLibCallList.append(libcall)
-            PrintUsedSyscall(funcInfoDict[libcall],funcInfoDict,calledLibCallList)
+            PrintUsedSyscall(funcInfoDict[libcall],funcInfoDict,calledLibCallList,usedSyscallSet)
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
@@ -123,7 +117,9 @@ if __name__ == "__main__":
     
     funcInfoDict = FuncInstDataCleansing(funcInstDict)
     calledLibCallList = list()
-    PrintUsedSyscall(funcInfoDict['main'],funcInfoDict,calledLibCallList)
+    usedSyscallSet = set()
+    PrintUsedSyscall(funcInfoDict['main'],funcInfoDict,calledLibCallList,usedSyscallSet)
+    print(usedSyscallSet)
     
 
     

@@ -14,12 +14,12 @@ def GetScore(sysweightDict, availSyscallDict):
     return score
 if __name__== "__main__":
     today = datetime.today().strftime("%Y%m%d")
-    sysweightDictPath = "/opt/volume/sysweightDict_"+today+".sav"
-    if os.path.exists(sysweightDictPath):
-        with open(sysweightDictPath,"rb") as f:
-            sysweightDict = pickle.load(f)
+    sysRiskDictPath = "/opt/volume/sysRiskDict_"+today+".sav"
+    if os.path.exists(sysRiskDictPath):
+        with open(sysRiskDictPath,"rb") as f:
+            sysRiskDict = pickle.load(f)
     else:
-        print("[error] no sysweightDict")
+        print("[error] no sysRiskDict")
         exit(1)
     availSyscallDictPath = "/opt/volume/availSyscallDict.sav"
     if os.path.exists(availSyscallDictPath):
@@ -29,5 +29,5 @@ if __name__== "__main__":
         print("[error] no availSyscallDict")
         exit(1)
     
-    score = GetScore(sysweightDict, availSyscallDict)
+    score = GetScore(sysRiskDict, availSyscallDict)
     print(score)
