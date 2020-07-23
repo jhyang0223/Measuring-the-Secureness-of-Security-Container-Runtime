@@ -82,9 +82,9 @@ def IsPatched(patchUrl):
 #month delta
 def PublishTimeDelta(publishDate):
     publishDateObj = datetime.strptime(publishDate,"%Y-%m-%d")
-    print(publishDateObj)
+#    print(publishDateObj)
     diff = datetime.now() - publishDateObj
-    print(diff.days)
+#    print(diff.days)
     timeWeight = diff.days//12
     return timeWeight
 
@@ -95,7 +95,7 @@ def MakeCVEWeightDict(CVEdocDict):
     for cve in cveList:
         webSite = "http://www.cvedetails.com/cve/"+cve
         pathHtml = requests.get(webSite)
-        print(cve)
+#        print(cve)
         soup = BeautifulSoup(pathHtml.content,'html.parser') 
         if soup.find('div','cvssbox') == None:
             noCVSSList.append(cve)

@@ -65,6 +65,14 @@ def SaveDict(targetDict,path):
     with open(path,"wb") as f:
         pickle.dump(targetDict, f)
 
+def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDict):
+    detailFile = open("/opt/volume/syscall_use.csv","w")
+    for syscall in linux_syscallDict:
+        record = linux_syscallDict+"," + scSyscallCntDict[syscall] + "," + runcSyscallCntDict[syscall] + "\n"
+        detailFile.write(record)
+    close(detailFile)
+    
+
 if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
@@ -78,3 +86,4 @@ if __name__ == "__main__":
 
     availSyscallSavePath = "/opt/volume/availSyscallDict.sav"
     SaveDict(availSyscallDict, availSyscallSavePath)
+    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDict)    

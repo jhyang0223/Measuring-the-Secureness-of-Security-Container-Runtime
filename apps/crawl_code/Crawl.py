@@ -26,7 +26,7 @@ def InitExploitDict():
     exploitDict = dict()
     
     #exploit db update
-    os.system("searchsploit -u")
+#    os.system("searchsploit -u")
     #get result of command(searchsploit linux kernel) and convert to string
     cmd = 'searchsploit -w linux kernel | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
     searchResult = subprocess.check_output(cmd,shell=True).decode().strip("\n")
