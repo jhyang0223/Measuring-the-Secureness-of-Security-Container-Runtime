@@ -68,7 +68,7 @@ def SaveDict(targetDict,path):
 def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDict):
     detailFile = open("/opt/volume/syscall_use.csv","w")
     for syscall in linux_syscallDict:
-        record = linux_syscallDict+"," + scSyscallCntDict[syscall] + "," + runcSyscallCntDict[syscall] + "\n"
+        record = syscall+"," + str(scSyscallCntDict[syscall]) + "," + str(runcSyscallCntDict[syscall]) + "\n"
         detailFile.write(record)
     close(detailFile)
     
