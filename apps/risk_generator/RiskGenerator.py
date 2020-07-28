@@ -193,12 +193,15 @@ if __name__ == "__main__":
         print("error: syscallUseDict does not exist")
         exit(1)
 
-
-    AddCVEInfo(syscallUseDict)
-    pd.set_option('display.max_rows', None)    
-    CVEdocDict = MakeCVEdocDict(syscallUseDict)
-    CVEWeightDict = MakeCVEWeightDict(CVEdocDict)
-    sysRiskDict = GetTFIDF(CVEdocDict,CVEWeightDict)
+    pd.set_option('display.max_rows', None)
             
     sysRiskDictPath = "/opt/volume/sysRiskDict_"+today+".sav"
-    SaveSysRiskDict(sysRiskDict,sysRiskDictPath)
+    if os.path.exists(sysRiskDictPath):
+        with open(sysRiskDictPath,"rb") as f:
+            sysRiskDict = pickle.load(f)
+    else :
+        AddCVEInfo(syscallUseDict)
+        CVEdocDict = MakeCVEdocDict(syscallUseDict)
+        CVEWeightDict = MakeCVEWeightDict(CVEdocDict)
+        sysRiskDict = GetTFIDF(CVEdocDict,CVEWeightDict)
+        SaveSysRiskDict(sysRiskDict,sysRiskDictPath)

@@ -26,9 +26,9 @@ def InitExploitDict():
     exploitDict = dict()
     
     #exploit db update
-#    os.system("searchsploit -u")
+    os.system("/usr/local/bin/searchsploit -u")
     #get result of command(searchsploit linux kernel) and convert to string
-    cmd = 'searchsploit -w linux kernel | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
+    cmd = '/usr/local/bin/searchsploit -w linux kernel | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
     searchResult = subprocess.check_output(cmd,shell=True).decode().strip("\n")
     searchResultIO = io.StringIO(searchResult)
     
@@ -259,7 +259,7 @@ def GetSyscallUseDict(initDict,lib2sysDict):
     #loop for each exploit ID
     for exploitID, informDict in syscallUseDict.items():
         #download exploit code in current directory
-        cmd = "searchsploit -m " + exploitID + " > /dev/null"
+        cmd = "/usr/local/bin/searchsploit -m " + exploitID + " > /dev/null"
         os.system(cmd)
         
         #if exploit code file type is c
