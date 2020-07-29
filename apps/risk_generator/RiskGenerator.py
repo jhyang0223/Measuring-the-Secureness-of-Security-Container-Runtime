@@ -82,9 +82,9 @@ def IsPatched(patchUrl):
 #month delta
 def PublishTimeDelta(publishDate):
     publishDateObj = datetime.strptime(publishDate,"%Y-%m-%d")
-    print(publishDateObj)
+#    print(publishDateObj)
     diff = datetime.now() - publishDateObj
-    print(diff.days)
+#    print(diff.days)
     timeWeight = diff.days//12
     return timeWeight
 
@@ -95,7 +95,7 @@ def MakeCVEWeightDict(CVEdocDict):
     for cve in cveList:
         webSite = "http://www.cvedetails.com/cve/"+cve
         pathHtml = requests.get(webSite)
-        print(cve)
+#        print(cve)
         soup = BeautifulSoup(pathHtml.content,'html.parser') 
         if soup.find('div','cvssbox') == None:
             noCVSSList.append(cve)
@@ -105,7 +105,7 @@ def MakeCVEWeightDict(CVEdocDict):
         publishDate = re.search("Publish Date : ([0-9]+-[0-9]+-[0-9]+)",dateNote).group(1)
         timeWeight = 1.0/float(PublishTimeDelta(publishDate))
             
-        cveWeightDict[cve] = float(cvssScore) #* timeWeight
+        cveWeightDict[cve] = float(cvssScore) * timeWeight
 
     for noCVSS in noCVSSList:
         del CVEdocDict[noCVSS]
@@ -150,7 +150,18 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
     
     wordList = list(set(word for doc in docs for word in doc.split())) # system call list
     wordList.sort()
-    
+        
+    wordCntList = list(word for doc in docs for word in doc.split())
+    allCnt = len(wordCntList)
+    wordFreqDict = dict()
+    for word in wordList:
+        wordFreqDict[word] = wordCntList.count(word)
+
+    sortedFreqDict = sorted(wordFreqDict.items(),key=(lambda x:x[1]),reverse=True)
+
+    for key,value in sortedFreqDict:
+        print(key,"-",value/allCnt)
+
     sysRiskDict = dict()
     sysweightNoTimeDict = dict()
     tfFrame = TF_test(wordList,docs,N)
@@ -172,7 +183,10 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
             tfidfntResult[-1].append(tfidf)
     tfidfFrame = pd.DataFrame(tfidfResult,columns=wordList)
     tfidfntFrame = pd.DataFrame(tfidfntResult,columns=wordList)
-    sysRiskDict = tfidfFrame.mean(axis=0).to_dict()
+    sysRiskDict = tfidfFrame.mask(tfidfFrame.eq(0)).mean(axis=0,skipna=True).to_dict()
+
+    print(tfidfFrame)
+
     
     return sysRiskDict
 
@@ -193,12 +207,22 @@ if __name__ == "__main__":
         print("error: syscallUseDict does not exist")
         exit(1)
 
+    pd.set_option('display.max_rows', None,'display.max_columns',None)
 
-    AddCVEInfo(syscallUseDict)
-    pd.set_option('display.max_rows', None)    
-    CVEdocDict = MakeCVEdocDict(syscallUseDict)
-    CVEWeightDict = MakeCVEWeightDict(CVEdocDict)
-    sysRiskDict = GetTFIDF(CVEdocDict,CVEWeightDict)
-            
+    addedSyscallUseDictPath = "/opt/volume/addedSyscallUseDict_"+today+".sav"
+    if os.path.exists(addedSyscallUseDictPath):
+        with open(addedSyscallUseDictPath,"rb") as f:
+            syscallUseDict = pickle.load(f)       
+    else:
+        AddCVEInfo(syscallUseDict)
+        SaveSysRiskDict(syscallUseDict,addedSyscallUseDictPath)
+
     sysRiskDictPath = "/opt/volume/sysRiskDict_"+today+".sav"
-    SaveSysRiskDict(sysRiskDict,sysRiskDictPath)
+    if os.path.exists(sysRiskDictPath):
+        with open(sysRiskDictPath,"rb") as f:
+            sysRiskDict = pickle.load(f)
+    else :
+        CVEdocDict = MakeCVEdocDict(syscallUseDict)
+        CVEWeightDict = MakeCVEWeightDict(CVEdocDict)
+        sysRiskDict = GetTFIDF(CVEdocDict,CVEWeightDict)
+        SaveSysRiskDict(sysRiskDict,sysRiskDictPath)

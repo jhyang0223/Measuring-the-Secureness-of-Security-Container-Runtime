@@ -44,19 +44,24 @@ def MakeSyscallCntDict(ftraceFilePath,linux_syscallDict):
 
     return syscallCntDict
 
-def MakeAvailSyscallDict(scSyscallDict, runcSyscallDict):
+def MakeAvailSyscallDict(scSyscallDict, progSyscallDict,linux_syscallDict):
     availSyscallDict  = dict()
-    syscalls = list(runcSyscallDict.keys())
+    syscalls = list(linux_syscallDict.values())
     cnt=0
     for syscallName in syscalls:
-#        if hostSyscallDict.get(syscallName,0)/containerSyscallDict[syscallName] > 1 :
-#            availSyscallDict[syscallName] = 1
-#        else:
-#            availSyscallDict[syscallName] = hostSyscallDict.get(syscallName,0)/containerSyscallDict[syscallName]
+        if scSyscallDict.get(syscallName) ==None and progSyscallDict.get(syscallName) == None:
+            availSyscallDict[syscallName] = 0
+
+        elif scSyscallDict.get(syscallName) !=None and progSyscallDict.get(syscallName) == None:
+            availSyscallDict[syscallName] = 1
+        elif scSyscallDict.get(syscallName,0)/progSyscallDict[syscallName] > 1 :
+            availSyscallDict[syscallName] = 1
+        else:
+            availSyscallDict[syscallName] = scSyscallDict.get(syscallName,0)/progSyscallDict[syscallName]
 #        if availSyscallDict[syscallName] > 0:
 #            print(syscallName)
 #            cnt += 1
-        availSyscallDict[syscallName] = scSyscallDict.get(syscallName,0)/runcSyscallDict[syscallName]
+#        availSyscallDict[syscallName] = scSyscallDict.get(syscallName,0)/runcSyscallDict[syscallName]
     print(cnt)
 
     return availSyscallDict
@@ -65,16 +70,26 @@ def SaveDict(targetDict,path):
     with open(path,"wb") as f:
         pickle.dump(targetDict, f)
 
+def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDict):
+    detailFile = open("/opt/volume/syscall_use.csv","w")
+#    print(linux_syscallDict.values())
+    for syscall in linux_syscallDict.values():
+        record = syscall+"," + str(scSyscallCntDict.get(syscall,0)) + "," + str(runcSyscallCntDict.get(syscall,0)) + "\n"
+        detailFile.write(record)
+    detailFile.close()
+    
+
 if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
-    print("host system call tracing file function cnt...")
+    print("security container runtime system call tracing file function cnt...")
     scSyscallCntDict = MakeSyscallCntDict("/opt/volume/security_container/ftrace.txt",linux_syscallDict)
-    print("container system call tracing file function cnt...")
-    runcSyscallCntDict = MakeSyscallCntDict("/opt/volume/runc_container/ftrace.txt",linux_syscallDict)
+    print("test program system call tracing file function cnt...")
+    progSyscallCntDict = MakeSyscallCntDict("/opt/volume/runc_container/ftrace.txt",linux_syscallDict)
     
-    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, runcSyscallCntDict)
-    print(availSyscallDict)
+    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
+#    print(availSyscallDict)
 
     availSyscallSavePath = "/opt/volume/availSyscallDict.sav"
     SaveDict(availSyscallDict, availSyscallSavePath)
+    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDict)    
