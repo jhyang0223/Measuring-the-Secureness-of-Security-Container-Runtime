@@ -1,8 +1,8 @@
 #!/bin/bash
 
 help_usage() {
-    echo "./syscallTrace_run.sh [security runtime]"
-    echo "./syscallTrace_run.sh runsc"
+    echo "./syscallTrace_run.sh [security runtime] [cache mode]"
+    echo "./syscallTrace_run.sh runsc cache"
 }
 
 if [ $# -lt 1 ]; then
@@ -37,78 +37,98 @@ sudo docker run -i -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS
 sudo docker stop ${program}
 sudo docker rm ${program}
 
-#get container pid information
-ltp_pid=$(ps -el | grep 'syscallTrace' | awk '{print $4}') #$(pgrep container -a | grep ${container_id} | awk '{print $1}')
-echo ${ltp_pid}
-
-#ftrace setting1
-sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
-sudo echo > /sys/kernel/debug/tracing/trace
-sleep 5s
-sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb
-sudo echo function > /sys/kernel/debug/tracing/current_tracer
-sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_ftrace_pid
-sudo echo function-fork > /sys/kernel/debug/tracing/trace_options
-sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
-sudo echo sys_exit* > /sys/kernel/debug/tracing/set_ftrace_filter
-
-#ftrace on
-sudo echo 1> /sys/kernel/debug/tracing/tracing_on
-
-#start runc runtime test container
-sudo docker run -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program}
-
-#start test program
-sudo docker exec -it ${program} bash -c "./test_script.sh"
-
-#ftrace off
-sudo echo 0> /sys/kernel/debug/tracing/tracing_on
-
-cp /sys/kernel/debug/tracing/trace /opt/volume/runc_container/ftrace.txt
-test_pid=$(ps -el | grep 'test_script' | awk '{print $4}')
-echo ${test_pid} >> /opt/volume/runc_container/ftrace.txt
-sudo docker stop ${program}
-sudo docker rm ${program}
-
 
 mkdir -p /opt/volume/security_container
 
-#start security runtime test container
-sudo docker run --runtime=${RUNTIME} -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program} 
-#Get container information
-container_id=$(docker ps | grep ${program} | cut -d" " -f1)
-ltp_pid= $(ps -el | grep 'syscallTrace' | awk '{print $4}') #$(pgrep container -a | grep ${container_id} | awk '{print $1}')
-echo ${container_id}
+ltp_pid=$(ps -el | grep 'syscallTrace' | awk '{print $4}') #$(pgrep container -a | grep ${container_id} | awk '{print $1}')
 echo ${ltp_pid}
-
 
 #ftrace setting
 sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
 sudo echo > /sys/kernel/debug/tracing/trace
-sleep 5s
+sleep 1s
 sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb
+sleep 1s
 sudo echo function > /sys/kernel/debug/tracing/current_tracer
+sleep 1s
 sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_ftrace_pid
-sudo echo function-fork > /sys/kernel/debug/tracing/trace_options
+sleep 1s
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_event_pid
+sleep 1s
+sudo echo event-fork > /sys/kernel/debug/tracing/trace_options
+sleep 1s
 sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
-sudo echo sys_exit* > /sys/kernel/debug/tracing/set_ftrace_filter
+sleep 1s
+sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter
+sleep 1s
 
 #ftrace on
-sudo echo 1> /sys/kernel/debug/tracing/tracing_on
+sudo echo 1 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
+
+#start security runtime test container
+sudo docker run --runtime=${RUNTIME} -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program}
+#Get container information
 
 #start test program
 sudo docker exec -it ${program} bash -c "./test_script.sh"
 
 #ftrace off
-sudo echo 0> /sys/kernel/debug/tracing/tracing_on
+sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
 
 cp /sys/kernel/debug/tracing/trace /opt/volume/security_container/ftrace.txt
 echo ${ltp_pid} >> /opt/volume/security_container/ftrace.txt
 docker stop ${program}
 docker rm ${program}
 
+if [ $# -lt 2 ]; then
+    exit
+fi
 
-#echo "tracing data processing ..."
-#sudo docker run -i -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program} python3 avail_syscall.py
-#docker stop ${program}
-#docker rm ${program}
+#start runc runtime test container
+sudo docker run -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program}
+
+container_id=$(docker ps | grep ${program} | cut -d" " -f1)
+ltp_pid=$(pgrep container -a | grep ${container_id} | awk '{print $1}')
+echo ${container_id}
+echo ${ltp_pid}
+
+#ftrace setting1
+sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
+sudo echo > /sys/kernel/debug/tracing/trace
+sleep 1s
+sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb
+sleep 1s
+sudo echo function > /sys/kernel/debug/tracing/current_tracer
+sleep 1s
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_ftrace_pid
+sleep 1s
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_event_pid
+sleep 1s
+sudo echo event-fork > /sys/kernel/debug/tracing/trace_options
+sleep 1s
+sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
+sleep 1s
+sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter
+sleep 1s
+
+#ftrace on
+sudo echo 1 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
+#start test program
+sudo docker exec -it ${program} bash -c "./test_script.sh"
+
+#ftrace off
+sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
+sleep 1s
+
+cat /sys/kernel/debug/tracing/set_ftrace_pid >> /opt/volume/runc_container/ftrace_pid.txt
+
+cp /sys/kernel/debug/tracing/trace /opt/volume/runc_container/ftrace.txt
+test_pid=$(ps -el | grep 'test_script' | awk '{print $4}')
+echo ${test_pid} >> /opt/volume/runc_container/ftrace.txt
+sudo docker stop ${program}
+sudo docker rm ${program}
