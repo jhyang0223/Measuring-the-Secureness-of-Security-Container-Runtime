@@ -40,7 +40,7 @@ sudo docker rm ${program}
 
 mkdir -p /opt/volume/security_container
 
-ltp_pid=$(pstree -ap | grep containerd | grep -v 'containerd-shim'| cut -d',' -f 2 | awk '{print $1}') #$(pgrep container -a | grep ${container_id} | awk '{print $1}')
+ltp_pid=$(ps -el | grep 'containerd-shim' | awk '{print $4}')       #$(pgrep container -a | grep ${container_id} | awk '{print $1}')
 echo ${ltp_pid}
 
 #ftrace setting
@@ -52,46 +52,34 @@ sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb
 sleep 1s
 sudo echo function > /sys/kernel/debug/tracing/current_tracer
 sleep 1s
-sudo echo ${ltp_pid}  > /sys/kernel/debug/tracing/set_ftrace_pid
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_ftrace_pid
 sleep 1s
-sudo echo ${ltp_pid}  > /sys/kernel/debug/tracing/set_event_pid
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_event_pid
 sleep 1s
 sudo echo event-fork > /sys/kernel/debug/tracing/trace_options
-sleep 1s
-sudo echo function-fork > /sys/kernel/debug/tracing/trace_options
 sleep 1s
 sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable
 sleep 1s
 sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter
-sleep 1s
-sudo echo 1 > /sys/kernel/debug/tracing/events/sched/sched_process_fork/enable
-sleep 1s
-sudo echo 1 > /sys/kernel/debug/tracing/events/sched/sched_process_exec/enable
 sleep 1s
 
 #ftrace on
 sudo echo 1 > /sys/kernel/debug/tracing/tracing_on
 sleep 1s
 
-
-cat /sys/kernel/debug/tracing/trace_pipe > /opt/volume/security_container/ftrace.txt &
-sleep 5s
 #start security runtime test container
-sudo docker run --runtime=${RUNTIME}  -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program}
+sudo docker run -d -t -h ${program} -v ${VOLUME_DIR}:${VOLUME_DIR} --cap-add SYS_PTRACE --name ${program} ${program}
 #Get container information
-#--runtime=${RUNTIME}
-
 
 #start test program
 sudo docker exec -it ${program} bash -c "./test_script.sh"
 
-sleep 10s
 #ftrace off
 sudo echo 0 > /sys/kernel/debug/tracing/tracing_on
 sleep 1s
 
-#cp /sys/kernel/debug/tracing/trace /opt/volume/security_container/ftrace.txt
-#echo ${ltp_pid} >> /opt/volume/security_container/ftrace.txt
+cp /sys/kernel/debug/tracing/trace /opt/volume/security_container/ftrace.txt
+echo ${ltp_pid} >> /opt/volume/security_container/ftrace.txt
 docker stop ${program}
 docker rm ${program}
 
@@ -118,9 +106,9 @@ sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb
 sleep 1s
 sudo echo function > /sys/kernel/debug/tracing/current_tracer
 sleep 1s
-sudo echo  > /sys/kernel/debug/tracing/set_ftrace_pid
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_ftrace_pid
 sleep 1s
-sudo echo  > /sys/kernel/debug/tracing/set_event_pid
+sudo echo ${ltp_pid} > /sys/kernel/debug/tracing/set_event_pid
 sleep 1s
 sudo echo event-fork > /sys/kernel/debug/tracing/trace_options
 sleep 1s
