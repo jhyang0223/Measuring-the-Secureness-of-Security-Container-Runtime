@@ -152,7 +152,7 @@ if __name__ == "__main__":
     cmd = 'cd ../apps/'+image+' && sudo docker build -t '+image+':latest .'
     os.system(cmd)
 
-    GetSyscallList(image,volume_opt)
+    GetSyscallList(image,volume_opt,mode)
     
     # get containerd proces pid for tracing container work including start up and exit
     cmd = "pstree -ap | grep containerd | grep -v 'containerd-shim'| cut -d',' -f 2 | awk '{print $1}'"
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                 cmd = "pstree -ap | grep 'containerd-shim' | cut -d',' -f 2 | awk '{print $1}'"
             elif runtime == "runsc":
                 cmd = "ps -ef | grep -e 'runsc' |  awk '{print $2}'"
-            elif runtime == "kata-runtime"
+            elif runtime == "kata-runtime":
                 cmd = "ps -ef | grep -e 'kata-runtime' | awk '{print $2}'"
             target_ppid_string = GetPidString(cmd)
             target_ppid_list = target_ppid_string.strip(" ").split(" ")
@@ -226,9 +226,9 @@ if __name__ == "__main__":
 
     os.chdir(firstDir)
     #tracing
-    if os.isdir("/opt/volume/host/ftrace_full.txt") == True and mode == "full":
+    if os.path.isdir("/opt/volume/host/ftrace_full.txt") == True and mode == "full":
         pass
-    elif os.isdir("/opt/volume/host/ftrace_simple.txt") == True and mode == "simple":
+    elif os.path.isdir("/opt/volume/host/ftrace_simple.txt") == True and mode == "simple":
         pass
     else:
         #rm all unused data in /opt/volume/host
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         cmd = "ps -ef | grep 'syscallTrace' | awk '{print $2}'"
         target_pid_string = GetPidString(cmd)
         target_pid_list = target_pid_string.strip(" ").split(" ")
-        FtraceSetting(target_pid_list,"host")
+        FtraceSetting(target_pid_string,"host")
         saveFileName = 'ftrace_' + mode + '.txt'
         traceThread = threading.Thread(target=TraceDataSaveD,args=(saveFileName,))
         traceThread.daemon = True
