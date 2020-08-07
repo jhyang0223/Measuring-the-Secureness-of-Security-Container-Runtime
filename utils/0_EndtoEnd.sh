@@ -16,6 +16,6 @@ MODE=$2
 
 ./crawlCode_run.sh
 ./riskGenerator_run.sh
-./syscallTrace_run.sh ${RUNTIME} ${MODE}
+python3 syscallTrace_run.py ${RUNTIME} ${MODE}
 ./syscallAvail_run.sh
 ./calculator_run.sh
