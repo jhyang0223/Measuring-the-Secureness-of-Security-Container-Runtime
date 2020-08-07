@@ -31,16 +31,18 @@ def MakeSyscallCntDict(ftraceFilePath,linux_syscallDict):
     template = ".+ sys_exit: NR ([0-9]+) = ([0-9]+)"
     compiled = re.compile(template)
     syscallCntDict = dict()
-    with open(ftraceFilePath) as ftraceFile:
-        for ftraceLine in ftraceFile.readlines():
-            retMatch = compiled.match(ftraceLine)
-            if retMatch != None:
-                syscallNum = retMatch.group(1)
-                syscall = linux_syscallDict[syscallNum]
-                if syscallCntDict.get(syscall) == None:
-                    print(syscall)
-                    syscallCntDict[syscall] =0
-                syscallCntDict[syscall]+=1
+    
+    for ftraceFileName in glob.glob(ftraceFilePath):
+        with open(ftraceFileName,"r") as ftraceFile:
+            for ftraceLine in ftraceFile.readlines():
+                retMatch = compiled.match(ftraceLine)
+                if retMatch != None:
+                    syscallNum = retMatch.group(1)
+                    syscall = linux_syscallDict[syscallNum]
+                    if syscallCntDict.get(syscall) == None:
+                        print(syscall)
+                        syscallCntDict[syscall] =0
+                    syscallCntDict[syscall]+=1
 
     return syscallCntDict
 
@@ -83,9 +85,9 @@ if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
     print("security container runtime system call tracing file function cnt...")
-    scSyscallCntDict = MakeSyscallCntDict("/opt/volume/security_container/ftrace.txt",linux_syscallDict)
+    scSyscallCntDict = MakeSyscallCntDict("/opt/volume/security_container/*",linux_syscallDict)
     print("test program system call tracing file function cnt...")
-    progSyscallCntDict = MakeSyscallCntDict("/opt/volume/runc_container/ftrace.txt",linux_syscallDict)
+    progSyscallCntDict = MakeSyscallCntDict("/opt/volume/host/*",linux_syscallDict)
     
     availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
 #    print(availSyscallDict)

@@ -45,7 +45,7 @@ def AddCVEInfo(syscallUseDict):
 
     #delete exploit code that does not have related cve
     for exploitID in exploitIDwithoutCVE:
-        print("del:",exploitID)
+#        print("del:",exploitID)
         del syscallUseDict[exploitID]
 
 ##################################################################################
@@ -58,7 +58,7 @@ def MakeCVEdocDict(exploitDict):
     for exploitID, informDict in exploitDict.items():
         syscallDoc = ''
         relatedCVE = ''
-        print(exploitID,informDict['used_syscall'])
+#        print(exploitID,informDict['used_syscall'])
         for syscall  in informDict['used_syscall']:
             syscallDoc += syscall +" "
         if informDict['relatedCVE'] !='':
@@ -159,8 +159,8 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
 
     sortedFreqDict = sorted(wordFreqDict.items(),key=(lambda x:x[1]),reverse=True)
 
-    for key,value in sortedFreqDict:
-        print(key,"-",value/allCnt)
+#    for key,value in sortedFreqDict:
+#        print(key,"-",value/allCnt)
 
     sysRiskDict = dict()
     sysweightNoTimeDict = dict()
@@ -185,7 +185,7 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
     tfidfntFrame = pd.DataFrame(tfidfntResult,columns=wordList)
     sysRiskDict = tfidfFrame.mask(tfidfFrame.eq(0)).mean(axis=0,skipna=True).to_dict()
 
-    print(tfidfFrame)
+#    print(tfidfFrame)
 
     
     return sysRiskDict
