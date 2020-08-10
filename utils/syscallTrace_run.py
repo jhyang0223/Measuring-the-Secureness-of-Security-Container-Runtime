@@ -69,13 +69,17 @@ def FtraceSetting(trace_pid_string, baseSystem):
     os.system(cmd)
     time.sleep(1)
 
-    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable'
-    os.system(cmd)
-    time.sleep(1)
+#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable'
+#    os.system(cmd)
+#    time.sleep(1)
 
-    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable'
-    os.system(cmd)
-    time.sleep(1)
+#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable'
+#    os.system(cmd)
+#    time.sleep(1)
+
+#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/syscalls/enable'
+#    os.system(cmd)
+#    time.sleep(1)
 
     cmd = 'sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter'
     os.system(cmd)
@@ -195,14 +199,15 @@ if __name__ == "__main__":
             
             FtraceSetting(target_pid_string,"container")  
 
-            if runtime != "runc":
-                cmd = 'sudo echo noevent-fork > /sys/kernel/debug/tracing/trace_options'
-                os.system(cmd)
-                time.sleep(1)
+#            if runtime != "runc":
 
-                cmd = 'sudo echo nofunction-fork > /sys/kernel/debug/tracing/trace_options'
-                os.system(cmd)
-                time.sleep(1)
+#                cmd = 'sudo echo noevent-fork > /sys/kernel/debug/tracing/trace_options'
+#                os.system(cmd)
+#                time.sleep(1)
+
+#                cmd = 'sudo echo nofunction-fork > /sys/kernel/debug/tracing/trace_options'
+#                os.system(cmd)
+#                time.sleep(1)
 
 
             #Test Program Start

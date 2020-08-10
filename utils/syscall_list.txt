@@ -1,1 +1,1 @@
-getpid
+socket
