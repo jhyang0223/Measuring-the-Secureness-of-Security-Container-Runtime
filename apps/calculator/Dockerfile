@@ -11,7 +11,6 @@ RUN apt-get install build-essential ssh -y
 RUN apt-get install python -y
 RUN apt-get install vim -y
 RUN apt-get install net-tools -y
-RUN apt-get install python-pip -y
 RUN apt-get install python3-pip -y
 
 COPY Calculator.py Calculator.py
