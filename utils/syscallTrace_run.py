@@ -42,7 +42,7 @@ def FtraceSetting(trace_pid_string, baseSystem):
     os.system('sudo echo > /sys/kernel/debug/tracing/trace')
     time.sleep(1)
 
-    os.system('sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb')
+    os.system('sudo echo 700800 > /sys/kernel/debug/tracing/buffer_size_kb')
     time.sleep(1)
 
     os.system('sudo echo function > /sys/kernel/debug/tracing/current_tracer')
@@ -259,3 +259,8 @@ if __name__ == "__main__":
         #execute test programs
         os.system("./test_script_host.sh")
         time.sleep(5)
+
+        #remove trace_pipe cat program
+        cmd = "kill -9 $(ps -ef | grep trace_pipe | awk '{print $2}')"
+        os.system(cmd)
+
