@@ -6,6 +6,12 @@ import io
 import glob
 import time
 import threading
+import pickle
+
+#for saving dictionary to disk
+def SaveDict(myDict,path):
+    with open(path,"wb") as f:
+        pickle.dump(myDict, f)
 
 #trace pipe for host side trace
 def TraceDataSaveD(fileName):
@@ -77,9 +83,9 @@ def FtraceSetting(trace_pid_string, baseSystem):
 #    os.system(cmd)
 #    time.sleep(1)
 
-#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/syscalls/enable'
-#    os.system(cmd)
-#    time.sleep(1)
+    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/syscalls/enable'
+    os.system(cmd)
+    time.sleep(1)
 
     cmd = 'sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter'
     os.system(cmd)
@@ -126,6 +132,15 @@ def GetPidFromPpid(ppid_list):
     cmd += " | awk '{print $3}'"
 
     return GetPidString(cmd)
+
+def GetProcInfoDict(tgidList,procInfoDict):
+    for tgid in tgidList:
+        if os.path.exists('/proc/'+tgid):
+            procPathCat = 'cat /proc/'+tgid+'/cmdline'   
+            procInfo  = subprocess.check_output(procPathCat, shell=True).decode().strip("\n")[0:20]
+            if procInfoDict.get(procInfo) == None:
+                procInfoDict[procInfo] = list()
+            procInfoDict[procInfo].append(tgid)
 
 if __name__ == "__main__":
     if len(sys.argv) is not 3:
@@ -176,6 +191,7 @@ if __name__ == "__main__":
     ##tracing each system call test
     ##traced procedure is in "" "" : contaienr start up --> ""execute one system call test program"" --> container exit
     ##I select this for loop method, because ftrace provide just buffer content
+    procInfoDict = dict()
     with open('/opt/volume/syscall_list.txt',"r") as syscallListFile:
         for syscallLine in syscallListFile:
             syscall = syscallLine.strip("\n")
@@ -190,13 +206,15 @@ if __name__ == "__main__":
             if runtime == "runc":
                 cmd = "pstree -ap | grep 'containerd-shim' | cut -d',' -f 2 | awk '{print $1}'"
             elif runtime == "runsc":
-                cmd = "ps -ef | grep -e 'runsc' |  awk '{print $2}'"
+                cmd = "ps -ef | grep -e 'runsc' -e 'containerd-shim' |  awk '{print $2}'"
             elif runtime == "kata-runtime":
-                cmd = "ps -ef | grep -e 'kata-runtime' | awk '{print $2}'"
-            target_ppid_string = GetPidString(cmd)
-            target_ppid_list = target_ppid_string.strip(" ").split(" ")
+                cmd = "ps -ef | grep -e 'kata-runtime' -e 'containerd-shim' | awk '{print $2}'"
+            target_ppid_string = GetPidString(cmd) # tgid
+            target_ppid_list = target_ppid_string.strip(" ").split(" ") #tgid list
             target_pid_string = GetPidFromPpid(target_ppid_list)
             
+            GetProcInfoDict(target_ppid_list, procInfoDict)
+
             FtraceSetting(target_pid_string,"container")  
 
 #            if runtime != "runc":
@@ -218,7 +236,7 @@ if __name__ == "__main__":
             os.system('sudo docker stop '+ image)
             os.system('sudo docker rm '+ image)
             syscall_list.append(syscall)
-
+    SaveDict(procInfoDict,"/opt/volume/security_container/procInfoDict.sav")    
     #trace for host side test
     #if this machine doesn't ltp test environment...
     if os.path.isdir("/opt/ltp") == False:

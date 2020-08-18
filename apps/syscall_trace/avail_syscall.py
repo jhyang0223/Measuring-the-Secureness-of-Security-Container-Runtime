@@ -27,24 +27,68 @@ def GetLinuxSyscallDict():
     print(len(linux_syscallDict))
     return linux_syscallDict
 
-def MakeSyscallCntDict(ftraceFilePath,linux_syscallDict):
-    template = ".+ sys_exit: NR ([0-9]+) = ([0-9]+)"
-    compiled = re.compile(template)
+def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
+    sys_enterT = '.+\(([0-9 ]+)\) .+: sys_(.+)\(.+\)'
+    sys_enterCompiled = re.compile(sys_enterT)
+
+    forkT = '.+ \(([0-9 ]+)\) .+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
+    forkCompiled = re.compile(forkT)
+
     syscallCntDict = dict()
     
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
             for ftraceLine in ftraceFile.readlines():
-                retMatch = compiled.match(ftraceLine)
-                if retMatch != None:
-                    syscallNum = retMatch.group(1)
-                    syscall = linux_syscallDict[syscallNum]
+                sys_enterRet = sys_enterCompiled.search(ftraceLine)
+                if sys_enterRet != None:
+                    syscall = sys_enterRet.group(2)
                     if syscallCntDict.get(syscall) == None:
                         print(syscall)
                         syscallCntDict[syscall] =0
                     syscallCntDict[syscall]+=1
 
     return syscallCntDict
+
+#make syscall count dictionary for security container runtime
+def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
+    sys_enterT = '.+\(([0-9 ]+)\).+: sys_(.+)\(.+\)'
+    sys_enterCompiled = re.compile(sys_enterT)
+
+    forkT = '.+\(([0-9 ]+)\).+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
+    forkCompiled = re.compile(forkT)
+
+    syscallCntDict = dict()
+    tgidChildDict = dict()
+    tgidSyscallCntDict = dict()
+    for ftraceFileName in glob.glob(ftraceFilePath):
+        with open(ftraceFileName,"r") as ftraceFile:
+            for ftraceLine in ftraceFile.readlines():
+                sys_enterRet = sys_enterCompiled.search(ftraceLine.strip('\n'))
+                print('sys_enterRet', sys_enterRet)
+                if sys_enterRet != None:
+                    tgid = sys_enterRet.group(1)
+                    syscall = sys_enterRet.group(2)
+                    if syscallCntDict.get(syscall) == None:
+                        print(syscall)
+                        syscallCntDict[syscall] =0
+                    syscallCntDict[syscall]+=1
+
+                    if tgidSyscallCntDict.get(tgid) == None:
+                        tgidSyscallCntDict[tgid] = dict()
+                    if tgidSyscallCntDict[tgid].get(syscall) == None:
+                        tgidSyscallCntDict[tgid][syscall] = 0
+                    tgidSyscallCntDict[tgid][syscall] += 1
+                    continue
+
+                forkRet = forkCompiled.search(ftraceLine.strip('\n'))
+                if forkRet != None:
+                    parentTgid = forkRet.group(1)
+                    childPid = forkRet.group(2)
+                    if tgidChildDict.get(parentTgid) == None:
+                        tgidChildDict[parentTgid] = list()
+                    tgidChildDict[parentTgid].append(childPid)
+
+    return syscallCntDict, tgidChildDict, tgidSyscallCntDict
 
 def MakeAvailSyscallDict(scSyscallDict, progSyscallDict,linux_syscallDict):
     availSyscallDict  = dict()
@@ -64,7 +108,7 @@ def MakeAvailSyscallDict(scSyscallDict, progSyscallDict,linux_syscallDict):
 #            print(syscallName)
 #            cnt += 1
 #        availSyscallDict[syscallName] = scSyscallDict.get(syscallName,0)/runcSyscallDict[syscallName]
-    print(cnt)
+#    print(cnt)
 
     return availSyscallDict
 
@@ -80,14 +124,33 @@ def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDi
         detailFile.write(record)
     detailFile.close()
     
+def PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict):
+    for tgid, syscallCntDict  in tgidSyscallCntDict.items():
+        tgidInfo = ''
+        for procInfo,procList in  procInfoDict.items():
+            if tgid in procList:
+                tgidInfo = procInfo
+                break
+        if tgidInfo == '':
+            for parent_tgid, childList in tgidChildDict.items():
+                if tgid in childList:
+                    tgidInfo = 'child of ' + parent_tgid
+                    break
+
+        if tgidInfo == '':
+            continue
+
+#        print("**",tgid,tgidInfo,"**")
+#        print(syscallCntDict)
+#        print('\n\n')
 
 if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
     print("security container runtime system call tracing file function cnt...")
-    scSyscallCntDict = MakeSyscallCntDict("/opt/volume/security_container/*",linux_syscallDict)
+    scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/socket.txt",linux_syscallDict)
     print("test program system call tracing file function cnt...")
-    progSyscallCntDict = MakeSyscallCntDict("/opt/volume/host/*",linux_syscallDict)
+    progSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/socket.txt",linux_syscallDict)
     
     availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
 #    print(availSyscallDict)
@@ -95,3 +158,14 @@ if __name__ == "__main__":
     availSyscallSavePath = "/opt/volume/availSyscallDict.sav"
     SaveDict(availSyscallDict, availSyscallSavePath)
     SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDict)    
+
+    procInfoDictPath = "/opt/volume/security_container/procInfoDict.sav"
+    if os.path.exists(procInfoDictPath):
+        with open(procInfoDictPath,"rb") as f:
+            procInfoDict = pickle.load(f)
+    else:
+        print("no /opt/volume/security_container/procInfoDict.sav")
+        exit(1)
+        
+    PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict)
+
