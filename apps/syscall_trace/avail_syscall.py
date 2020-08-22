@@ -43,7 +43,7 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
                 if sys_enterRet != None:
                     syscall = sys_enterRet.group(2)
                     if syscallCntDict.get(syscall) == None:
-                        print(syscall)
+#                        print(syscall)
                         syscallCntDict[syscall] =0
                     syscallCntDict[syscall]+=1
 
@@ -64,12 +64,12 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
         with open(ftraceFileName,"r") as ftraceFile:
             for ftraceLine in ftraceFile.readlines():
                 sys_enterRet = sys_enterCompiled.search(ftraceLine.strip('\n'))
-                print('sys_enterRet', sys_enterRet)
+#                print('sys_enterRet', sys_enterRet)
                 if sys_enterRet != None:
                     tgid = sys_enterRet.group(1)
                     syscall = sys_enterRet.group(2)
                     if syscallCntDict.get(syscall) == None:
-                        print(syscall)
+#                        print(syscall)
                         syscallCntDict[syscall] =0
                     syscallCntDict[syscall]+=1
 
@@ -148,9 +148,9 @@ if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
     print("security container runtime system call tracing file function cnt...")
-    scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/socket.txt",linux_syscallDict)
+    scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/*.txt",linux_syscallDict)
     print("test program system call tracing file function cnt...")
-    progSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/socket.txt",linux_syscallDict)
+    progSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*.txt",linux_syscallDict)
     
     availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
 #    print(availSyscallDict)

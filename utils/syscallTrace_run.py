@@ -7,6 +7,7 @@ import glob
 import time
 import threading
 import pickle
+import signal
 
 #for saving dictionary to disk
 def SaveDict(myDict,path):
@@ -48,7 +49,7 @@ def FtraceSetting(trace_pid_string, baseSystem):
     os.system('sudo echo > /sys/kernel/debug/tracing/trace')
     time.sleep(1)
 
-    os.system('sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb')
+    os.system('sudo echo 100800 > /sys/kernel/debug/tracing/buffer_size_kb')
     time.sleep(1)
 
     os.system('sudo echo function > /sys/kernel/debug/tracing/current_tracer')
@@ -141,6 +142,9 @@ def GetProcInfoDict(tgidList,procInfoDict):
             if procInfoDict.get(procInfo) == None:
                 procInfoDict[procInfo] = list()
             procInfoDict[procInfo].append(tgid)
+
+def SigHandler(signum, frame):
+    pass
 
 if __name__ == "__main__":
     if len(sys.argv) is not 3:
@@ -260,20 +264,29 @@ if __name__ == "__main__":
         cmd = "ps -ef | grep 'syscallTrace' | awk '{print $2}'"
         target_pid_string = GetPidString(cmd)
         target_pid_list = target_pid_string.strip(" ").split(" ")
-        FtraceSetting(target_pid_string,"host")
-        saveFileName = 'ftrace_' + mode + '.txt'
-        traceThread = threading.Thread(target=TraceDataSaveD,args=(saveFileName,))
-        traceThread.daemon = True
-        traceThread.start()
-        
-        cmd = 'sudo echo function-fork > /sys/kernel/debug/tracing/trace_options'
-        os.system(cmd)
-        time.sleep(1)
 
-        cmd = 'sudo echo event-fork > /sys/kernel/debug/tracing/trace_options'
-        os.system(cmd)
-        time.sleep(1)
+        ppid = os.getpid()
+        pid = os.fork()
 
-        #execute test programs
-        os.system("./test_script_host.sh")
-        time.sleep(5)
+        if pid == 0: # child
+            FtraceSetting(target_pid_string,"host")
+            saveFileName = 'ftrace_' + mode + '.txt'
+            cmd = 'sudo echo function-fork > /sys/kernel/debug/tracing/trace_options'
+            os.system(cmd)
+            time.sleep(1)
+
+            cmd = 'sudo echo event-fork > /sys/kernel/debug/tracing/trace_options'
+            os.system(cmd)
+            time.sleep(1)
+            os.kill(ppid, signal.SIGUSR1)
+            TraceDataSaveD(saveFileName)
+        else : # parent
+            #execute test programs
+            signal.signal(signal.SIGUSR1, SigHandler)
+            signal.pause()
+            print("end pause")
+            os.system("./test_script_host.sh")
+            time.sleep(5)
+
+            cmd = "kill -9 $(ps -ef | grep trace_pipe | awk '{print $2}')"
+            os.system(cmd)
