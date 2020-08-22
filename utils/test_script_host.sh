@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sleep 20s
+
 for syscall in $(cat /opt/volume/syscall_list.txt)
 do
     for program in  $(ls -l /opt/ltp/testcases/kernel/syscalls/${syscall}/ | grep rwx | cut -d" " -f 9)
