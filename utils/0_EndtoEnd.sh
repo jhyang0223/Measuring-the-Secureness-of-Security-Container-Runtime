@@ -19,3 +19,4 @@ MODE=$2
 python3 syscallTrace_run.py ${RUNTIME} ${MODE}
 ./syscallAvail_run.sh
 ./calculator_run.sh
+python3 makeScoreData.py ${RUNTIME} ${MODE}
