@@ -49,7 +49,7 @@ def FtraceSetting(trace_pid_string, baseSystem):
     os.system('sudo echo > /sys/kernel/debug/tracing/trace')
     time.sleep(1)
 
-    os.system('sudo echo 100800 > /sys/kernel/debug/tracing/buffer_size_kb')
+    os.system('sudo echo 1080800 > /sys/kernel/debug/tracing/buffer_size_kb')
     time.sleep(1)
 
     os.system('sudo echo function > /sys/kernel/debug/tracing/current_tracer')
@@ -76,17 +76,17 @@ def FtraceSetting(trace_pid_string, baseSystem):
     os.system(cmd)
     time.sleep(1)
 
-#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable'
-#    os.system(cmd)
-#    time.sleep(1)
-
-#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable'
-#    os.system(cmd)
-#    time.sleep(1)
-
-    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/syscalls/enable'
+    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/enable'
     os.system(cmd)
     time.sleep(1)
+
+    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/enable'
+    os.system(cmd)
+    time.sleep(1)
+
+#    cmd = 'sudo echo 1 > /sys/kernel/debug/tracing/events/syscalls/enable'
+#    os.system(cmd)
+#    time.sleep(1)
 
     cmd = 'sudo echo sys_ni_syscall > /sys/kernel/debug/tracing/set_ftrace_filter'
     os.system(cmd)
@@ -167,8 +167,10 @@ if __name__ == "__main__":
         os.system('sudo docker rm '+ image)
 
     os.system("mkdir -p /opt/volume/host")
+    os.system("mkdir -p /opt/volume/program")
     os.system('rm /opt/volume/syscall_list.txt')
     os.system('rm /opt/volume/security_container/*')
+    os.system('rm /opt/volume/program/*')
     
     print('Building container image for ' + image)
     
@@ -176,7 +178,7 @@ if __name__ == "__main__":
     os.system(cmd)
 
     GetSyscallList(image,volume_opt,mode)
-    
+
     # get containerd proces pid for tracing container work including start up and exit
     cmd = "pstree -ap | grep containerd | grep -v 'containerd-shim'| cut -d',' -f 2 | awk '{print $1}'"
     containerd_pid_string = GetPidString(cmd)
@@ -185,13 +187,14 @@ if __name__ == "__main__":
 
     #start up and end time system call tracing
 #    cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image    
-    cmd = 'sudo docker run --runtime '+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+    cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
     os.system(cmd)    
     os.system('sudo docker stop '+ image)
     os.system('sudo docker rm '+ image)
 
     SaveTrace('StartExit.txt')
     syscall_list = list()
+    
     ##tracing each system call test
     ##traced procedure is in "" "" : contaienr start up --> ""execute one system call test program"" --> container exit
     ##I select this for loop method, because ftrace provide just buffer content
@@ -204,7 +207,7 @@ if __name__ == "__main__":
             if runtime == "runc":
                 cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
             else:
-                cmd = 'sudo docker run --runtime '+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+                cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
             os.system(cmd)
 
             if runtime == "runc":
@@ -235,13 +238,37 @@ if __name__ == "__main__":
             #Test Program Start
             cmd = 'sudo docker exec -it '+image+' bash -c "./test_script.sh ' + syscall  + ' "'
             os.system(cmd)
-    
+            time.sleep(2) 
             SaveTrace(syscall+'.txt')
             os.system('sudo docker stop '+ image)
             os.system('sudo docker rm '+ image)
             syscall_list.append(syscall)
     SaveDict(procInfoDict,"/opt/volume/security_container/procInfoDict.sav")    
-    #trace for host side test
+
+    
+#######################################################################################################################
+#trace for program in container side test
+
+    with open('/opt/volume/syscall_list.txt', 'r') as syscallListFile:
+        for syscallLine in syscallListFile:
+            syscall = syscallLine.strip("\n")
+            print(syscall)
+            if runtime == "runc":
+                cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+            else:
+                cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+            os.system(cmd)
+
+            cmd = 'sudo docker exec -it ' + image + ' bash -c "./test_script_strace.sh ' + syscall +' "'
+            os.system(cmd)
+
+            os.system('sudo docker stop ' + image)
+            os.system('sudo docker rm ' + image)
+
+
+######################################################################################################################
+#trace for host side test
+    
     #if this machine doesn't ltp test environment...
     if os.path.isdir("/opt/ltp") == False:
         os.system("git clone https://github.com/linux-test-project/ltp.git /opt/ltp")
@@ -252,7 +279,7 @@ if __name__ == "__main__":
         os.system("make install")
 
     os.chdir(firstDir)
-    #tracing
+    #tracing to ltp program execution in host (not container...)
     if os.path.isdir("/opt/volume/host/ftrace_full.txt") == True and mode == "full":
         pass
     elif os.path.isdir("/opt/volume/host/ftrace_simple.txt") == True and mode == "simple":
@@ -290,3 +317,5 @@ if __name__ == "__main__":
 
             cmd = "kill -9 $(ps -ef | grep trace_pipe | awk '{print $2}')"
             os.system(cmd)
+    
+   
