@@ -28,8 +28,8 @@ def GetLinuxSyscallDict():
     return linux_syscallDict
 
 def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
-    sys_enterT = '.+\(([0-9 ]+)\) .+: sys_(.+)\(.+\)'
-    sys_enterCompiled = re.compile(sys_enterT)
+    sys_exitT = ".+ sys_exit: NR ([0-9]+) = ([0-9]+)"   #'.+\(([0-9 ]+)\) .+: sys_(.+)\(.+\)'
+    sys_exitCompiled = re.compile(sys_exitT)
 
     forkT = '.+ \(([0-9 ]+)\) .+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
     forkCompiled = re.compile(forkT)
@@ -39,9 +39,10 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
             for ftraceLine in ftraceFile.readlines():
-                sys_enterRet = sys_enterCompiled.search(ftraceLine)
-                if sys_enterRet != None:
-                    syscall = sys_enterRet.group(2)
+                sys_exitRet = sys_exitCompiled.search(ftraceLine)
+                if sys_exitRet != None:
+                    syscallNum = sys_exitRet.group(1)
+                    syscall = linux_syscallDict[syscallNum]
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
                         syscallCntDict[syscall] =0
@@ -51,8 +52,8 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
 
 #make syscall count dictionary for security container runtime
 def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
-    sys_enterT = '.+\(([0-9 ]+)\).+: sys_(.+)\(.+\)'
-    sys_enterCompiled = re.compile(sys_enterT)
+    sys_exitT = ".+\(([0-9 ]+)\).+: sys_exit: NR ([0-9]+) = ([0-9]+)"  #'.+\(([0-9 ]+)\).+: sys_(.+)\(.+\)'
+    sys_exitCompiled = re.compile(sys_exitT)
 
     forkT = '.+\(([0-9 ]+)\).+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
     forkCompiled = re.compile(forkT)
@@ -63,11 +64,12 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
             for ftraceLine in ftraceFile.readlines():
-                sys_enterRet = sys_enterCompiled.search(ftraceLine.strip('\n'))
-#                print('sys_enterRet', sys_enterRet)
-                if sys_enterRet != None:
-                    tgid = sys_enterRet.group(1)
-                    syscall = sys_enterRet.group(2)
+                sys_exitRet = sys_exitCompiled.search(ftraceLine.strip('\n'))
+#                print('sys_exitRet', sys_exitRet)
+                if sys_exitRet != None:
+                    tgid = sys_exitRet.group(1)
+                    syscallNum = sys_exitRet.group(2)
+                    syscall = linux_syscallDict[syscallNum]
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
                         syscallCntDict[syscall] =0
@@ -89,6 +91,23 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
                     tgidChildDict[parentTgid].append(childPid)
 
     return syscallCntDict, tgidChildDict, tgidSyscallCntDict
+
+def MakeSyscallCntDict_program(straceFilePath, linux_syscallDict):
+    straceT = "([a-zA-Z0-9_]+)\(.*\)\s+=\s+[0-9]+"
+    straceCompiled = re.compile(straceT)
+    syscallCntDict = dict()
+    
+    for straceFileName in glob.glob(straceFilePath):
+        with open(straceFileName,"r") as straceFile:
+            for straceLine in straceFile.readlines():
+                retMatch = straceCompiled.match(straceLine)
+                if retMatch !=None:
+                    syscall = retMatch.group(1)
+                    if syscallCntDict.get(syscall) == None:
+                        syscallCntDict[syscall] = 0
+                    syscallCntDict[syscall] += 1
+    
+    return syscallCntDict
 
 def MakeAvailSyscallDict(scSyscallDict, progSyscallDict,linux_syscallDict):
     availSyscallDict  = dict()
@@ -116,11 +135,12 @@ def SaveDict(targetDict,path):
     with open(path,"wb") as f:
         pickle.dump(targetDict, f)
 
-def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, runcSyscallCntDict):
+def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, hostSyscallCntDict, progSyscallCntDict):
     detailFile = open("/opt/volume/syscall_use.csv","w")
 #    print(linux_syscallDict.values())
+    detailFile.write('system call,host,program,security container\n')
     for syscall in linux_syscallDict.values():
-        record = syscall+"," + str(scSyscallCntDict.get(syscall,0)) + "," + str(runcSyscallCntDict.get(syscall,0)) + "\n"
+        record = syscall + "," + str(hostSyscallCntDict.get(syscall,0)) + "," + str(progSyscallCntDict.get(syscall,0)) +"," + str(scSyscallCntDict.get(syscall,0)) + "\n"
         detailFile.write(record)
     detailFile.close()
     
@@ -150,14 +170,16 @@ if __name__ == "__main__":
     print("security container runtime system call tracing file function cnt...")
     scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/*.txt",linux_syscallDict)
     print("test program system call tracing file function cnt...")
-    progSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*.txt",linux_syscallDict)
-    
-    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
+    hostSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*.txt",linux_syscallDict)
+    print("test program in container system call tracing file function cnt by strace...")
+    progSyscallCntDict = MakeSyscallCntDict_program("/opt/volume/program/*",linux_syscallDict)
+
+    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, hostSyscallCntDict,linux_syscallDict)
 #    print(availSyscallDict)
 
     availSyscallSavePath = "/opt/volume/availSyscallDict.sav"
     SaveDict(availSyscallDict, availSyscallSavePath)
-    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDict)    
+    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, hostSyscallCntDict,progSyscallCntDict)    
 
     procInfoDictPath = "/opt/volume/security_container/procInfoDict.sav"
     if os.path.exists(procInfoDictPath):
