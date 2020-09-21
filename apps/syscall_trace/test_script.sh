@@ -27,3 +27,14 @@ for program in $(ls -l testcases/kernel/syscalls/${syscall}/ | grep rwx | awk '{
             timeout -s 9 300s testcases/kernel/syscalls/${syscall}/${program}
         fi
     done
+
+ipcArray= ("msgctl" "msgget" "msgrcv" "msgsnd" "msgstress" "semctl" "semget" "semop" "shmat" "shmctl" "shmdt" "shmget")
+
+for ipcSyscall in "${ipcArray[@]}"; do
+    for program in  $(ls -l testcases/kernel/syscalls/ipc/${ipcSyscall}/ | grep rwx | awk '{print $9}')
+        do
+            sleep 5s
+            echo /opt/ltp/testcases/kernel/syscalls/ipc/${ipcSyscall}/${program}
+            timeout -s 9 300s testcases/kernel/syscalls/ipc/${ipcSyscall}/${program}
+    done
+done

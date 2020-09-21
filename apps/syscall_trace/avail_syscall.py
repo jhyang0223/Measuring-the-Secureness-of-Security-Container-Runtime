@@ -28,7 +28,7 @@ def GetLinuxSyscallDict():
     return linux_syscallDict
 
 def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
-    sys_exitT = ".+ sys_exit: NR ([0-9]+) = ([0-9]+)"   #'.+\(([0-9 ]+)\) .+: sys_(.+)\(.+\)'
+    sys_exitT = ".+ sys_exit: NR ([0-9]+) = ([-0-9]+)"   #'.+\(([0-9 ]+)\) .+: sys_(.+)\(.+\)'
     sys_exitCompiled = re.compile(sys_exitT)
 
     forkT = '.+ \(([0-9 ]+)\) .+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
@@ -42,6 +42,8 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
                 sys_exitRet = sys_exitCompiled.search(ftraceLine)
                 if sys_exitRet != None:
                     syscallNum = sys_exitRet.group(1)
+                    if int(syscallNum) > len(linux_syscallDict):
+                        continue
                     syscall = linux_syscallDict[syscallNum]
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
@@ -52,7 +54,7 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
 
 #make syscall count dictionary for security container runtime
 def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
-    sys_exitT = ".+\(([0-9 ]+)\).+: sys_exit: NR ([0-9]+) = ([0-9]+)"  #'.+\(([0-9 ]+)\).+: sys_(.+)\(.+\)'
+    sys_exitT = ".+\(([0-9 ]+)\).+: sys_exit: NR ([0-9]+) = ([-0-9]+)"  #'.+\(([0-9 ]+)\).+: sys_(.+)\(.+\)'
     sys_exitCompiled = re.compile(sys_exitT)
 
     forkT = '.+\(([0-9 ]+)\).+: sched_process_fork: comm=.+ pid=.+ child_comm=.+ child_pid=(.+)'
@@ -61,14 +63,19 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
     syscallCntDict = dict()
     tgidChildDict = dict()
     tgidSyscallCntDict = dict()
+    cmt =0
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
+            cmt += 1
+            print(cmt, ftraceFileName)
             for ftraceLine in ftraceFile.readlines():
                 sys_exitRet = sys_exitCompiled.search(ftraceLine.strip('\n'))
 #                print('sys_exitRet', sys_exitRet)
                 if sys_exitRet != None:
                     tgid = sys_exitRet.group(1)
                     syscallNum = sys_exitRet.group(2)
+                    if int(syscallNum) > len(linux_syscallDict):
+                        continue  
                     syscall = linux_syscallDict[syscallNum]
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
@@ -93,7 +100,7 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
     return syscallCntDict, tgidChildDict, tgidSyscallCntDict
 
 def MakeSyscallCntDict_program(straceFilePath, linux_syscallDict):
-    straceT = "([a-zA-Z0-9_]+)\(.*\)\s+=\s+[0-9]+"
+    straceT = "([a-zA-Z0-9_]+)\(.*\)\s+=\s+[-0-9]+"
     straceCompiled = re.compile(straceT)
     syscallCntDict = dict()
     
@@ -164,13 +171,32 @@ def PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict):
 #        print(syscallCntDict)
 #        print('\n\n')
 
+#big file is bigger than 1GB...
+def BigFileSplit(dirPath):
+    cmd = "find "+dirPath +" -size +1000000k"
+    #bigFileList = ["/opt/volume/security_container/epoll.txt", "/opt/volume/security_container/fork.txt", ...]
+    bigFileList = subprocess.check_output(cmd,shell=True).decode().strip("\n").split("\n")
+    print(bigFileList)
+    #bigFile = "/opt/volume/security_container/epoll.txt"
+    for bigFile in bigFileList: 
+        filePrefix = bigFile.strip(".txt") # filePrefix = "/opt/volume/security_container/epoll"
+        cmd = 'split -l 300000 --additional-suffix=.txt '+ bigFile + " " + filePrefix +"_"
+        os.system(cmd)
+        cmd = "rm "+ bigFile
+        os.system(cmd)
+        print("rm ",bigFile)
+
 if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
     print("security container runtime system call tracing file function cnt...")
+    BigFileSplit("/opt/volume/security_container/*")
+    BigFileSplit("/opt/volume/program/*")
+    BigFileSplit("/opt/volume/host/*")
     scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/*.txt",linux_syscallDict)
+    
     print("test program system call tracing file function cnt...")
-    hostSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*.txt",linux_syscallDict)
+    hostSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*",linux_syscallDict)
     print("test program in container system call tracing file function cnt by strace...")
     progSyscallCntDict = MakeSyscallCntDict_program("/opt/volume/program/*",linux_syscallDict)
 
@@ -190,4 +216,4 @@ if __name__ == "__main__":
         exit(1)
         
     PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict)
-
+    

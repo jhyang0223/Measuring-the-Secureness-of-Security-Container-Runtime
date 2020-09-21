@@ -199,6 +199,7 @@ if __name__ == "__main__":
     ##traced procedure is in "" "" : contaienr start up --> ""execute one system call test program"" --> container exit
     ##I select this for loop method, because ftrace provide just buffer content
     procInfoDict = dict()
+    
     with open('/opt/volume/syscall_list.txt',"r") as syscallListFile:
         for syscallLine in syscallListFile:
             syscall = syscallLine.strip("\n")
@@ -243,12 +244,53 @@ if __name__ == "__main__":
             os.system('sudo docker stop '+ image)
             os.system('sudo docker rm '+ image)
             syscall_list.append(syscall)
+    
+    if mode == "full":
+        if runtime == "runc":
+            cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+        else:
+            cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+        os.system(cmd)
+
+        if runtime == "runc":
+            cmd = "pstree -ap | grep 'containerd-shim' | cut -d',' -f 2 | awk '{print $1}'"
+        elif runtime == "runsc":
+            cmd = "ps -ef | grep -e 'runsc' -e 'containerd-shim' |  awk '{print $2}'"
+        elif runtime == "kata-runtime":
+            cmd = "ps -ef | grep -e 'kata-runtime' -e 'containerd-shim' | awk '{print $2}'"
+        target_ppid_string = GetPidString(cmd) # tgid
+        target_ppid_list = target_ppid_string.strip(" ").split(" ") #tgid list
+        target_pid_string = GetPidFromPpid(target_ppid_list)
+
+        GetProcInfoDict(target_ppid_list, procInfoDict)
+
+        FtraceSetting(target_pid_string,"container")
+
+#            if runtime != "runc":
+
+#                cmd = 'sudo echo noevent-fork > /sys/kernel/debug/tracing/trace_options'
+#                os.system(cmd)
+#                time.sleep(1)
+
+#                cmd = 'sudo echo nofunction-fork > /sys/kernel/debug/tracing/trace_options'
+#                os.system(cmd)
+#                time.sleep(1)
+
+
+        #Test Program Start
+        cmd = 'sudo docker exec -it '+image+' bash -c "./test_ipc.sh"'
+        os.system(cmd)
+        time.sleep(2)
+        SaveTrace('ipc.txt')
+        os.system('sudo docker stop '+ image)
+        os.system('sudo docker rm '+ image)
+       # syscall_list.append(syscall)
     SaveDict(procInfoDict,"/opt/volume/security_container/procInfoDict.sav")    
 
     
 #######################################################################################################################
 #trace for program in container side test
-
+    
     with open('/opt/volume/syscall_list.txt', 'r') as syscallListFile:
         for syscallLine in syscallListFile:
             syscall = syscallLine.strip("\n")
@@ -264,11 +306,21 @@ if __name__ == "__main__":
 
             os.system('sudo docker stop ' + image)
             os.system('sudo docker rm ' + image)
+    
+    if mode == "full":
+        #ipc systemcalls testing...
+        if runtime == "runc":
+            cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+        else:
+            cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+        os.system(cmd)
 
+        cmd = 'sudo docker exec -it ' + image + ' bash -c "./test_ipc_strace.sh"'
+        os.system(cmd)
 
 ######################################################################################################################
 #trace for host side test
-    
+     
     #if this machine doesn't ltp test environment...
     if os.path.isdir("/opt/ltp") == False:
         os.system("git clone https://github.com/linux-test-project/ltp.git /opt/ltp")
@@ -313,9 +365,11 @@ if __name__ == "__main__":
             signal.pause()
             print("end pause")
             os.system("./test_script_host.sh")
+            if mode =="full":
+                os.system("./test_ipc_host.sh")
             time.sleep(5)
 
             cmd = "kill -9 $(ps -ef | grep trace_pipe | awk '{print $2}')"
             os.system(cmd)
     
-   
+    

@@ -27,3 +27,4 @@ for program in $(ls -l testcases/kernel/syscalls/${syscall}/ | grep rwx | awk '{
             timeout -s 9 300s strace -f -ff  -o /opt/volume/program/syscall_trace_${syscall}.txt testcases/kernel/syscalls/${syscall}/${program}
         fi
     done
+

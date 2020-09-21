@@ -16,4 +16,3 @@ do
     done
 done
 
-#timeout -s 9 300s testcases/kernel/syscalls/socket/socket02
