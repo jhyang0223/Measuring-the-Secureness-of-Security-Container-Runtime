@@ -29,10 +29,14 @@ RUN apt-get install strace -y
 
 COPY test_script.sh test_script.sh
 COPY test_script_strace.sh test_script_strace.sh
+COPY test_ipc.sh test_ipc.sh
+COPY test_ipc_strace.sh test_ipc_strace.sh
 COPY syscall_list.sh syscall_list.sh
 COPY avail_syscall.py avail_syscall.py
 COPY grammar.txt grammar.txt
 RUN chmod 755 test_script.sh
 RUN chmod 755 test_script_strace.sh
 RUN chmod 755 syscall_list.sh
+RUN chmod 755 test_ipc.sh
+RUN chmod 755 test_ipc_strace.sh
 CMD ["/bin/bash"]
