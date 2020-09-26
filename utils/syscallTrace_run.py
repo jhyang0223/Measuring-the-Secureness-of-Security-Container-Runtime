@@ -214,9 +214,9 @@ if __name__ == "__main__":
             if runtime == "runc":
                 cmd = "pstree -ap | grep 'containerd-shim' | cut -d',' -f 2 | awk '{print $1}'"
             elif runtime == "runsc":
-                cmd = "ps -ef | grep -e 'runsc' -e 'containerd-shim' |  awk '{print $2}'"
+                cmd = "ps -ef | grep 'containerd-shim' |  awk '{print $2}'"
             elif runtime == "kata-runtime":
-                cmd = "ps -ef | grep -e 'kata-runtime' -e 'containerd-shim' | awk '{print $2}'"
+                cmd = "ps -ef | grep 'containerd-shim' | awk '{print $2}'"
             target_ppid_string = GetPidString(cmd) # tgid
             target_ppid_list = target_ppid_string.strip(" ").split(" ") #tgid list
             target_pid_string = GetPidFromPpid(target_ppid_list)
@@ -320,7 +320,7 @@ if __name__ == "__main__":
 
 ######################################################################################################################
 #trace for host side test
-     
+    ''' 
     #if this machine doesn't ltp test environment...
     if os.path.isdir("/opt/ltp") == False:
         os.system("git clone https://github.com/linux-test-project/ltp.git /opt/ltp")
@@ -372,4 +372,4 @@ if __name__ == "__main__":
             cmd = "kill -9 $(ps -ef | grep trace_pipe | awk '{print $2}')"
             os.system(cmd)
     
-        
+    '''        
