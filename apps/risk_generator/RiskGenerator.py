@@ -92,6 +92,7 @@ def MakeCVEWeightDict(CVEdocDict):
     cveList = list(CVEdocDict.keys())
     cveWeightDict = dict()
     noCVSSList = list()
+    
     for cve in cveList:
         webSite = "http://www.cvedetails.com/cve/"+cve
         pathHtml = requests.get(webSite)
@@ -109,6 +110,7 @@ def MakeCVEWeightDict(CVEdocDict):
 
     for noCVSS in noCVSSList:
         del CVEdocDict[noCVSS]
+    
     return cveWeightDict
         
 def TF(word, doc):
@@ -129,7 +131,7 @@ def IDF(word,docs,N):
     df = 0
     for doc in docs:
         df += word in doc
-    return log(N/(df+1))
+    return N/(df+1)
 
 def IDF_test(wordList,docs,N):
     idfResult = list()
@@ -184,6 +186,7 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
     tfidfFrame = pd.DataFrame(tfidfResult,columns=wordList)
     tfidfntFrame = pd.DataFrame(tfidfntResult,columns=wordList)
     sysRiskDict = tfidfFrame.mask(tfidfFrame.eq(0)).mean(axis=0,skipna=True).to_dict()
+    tfidfFrame.to_csv("/opt/volume/tfidf_dataframe.csv")
 
 #    print(tfidfFrame)
 
@@ -225,4 +228,5 @@ if __name__ == "__main__":
         CVEdocDict = MakeCVEdocDict(syscallUseDict)
         CVEWeightDict = MakeCVEWeightDict(CVEdocDict)
         sysRiskDict = GetTFIDF(CVEdocDict,CVEWeightDict)
+        os.system("rm /opt/volume/sysRiskDict*")
         SaveSysRiskDict(sysRiskDict,sysRiskDictPath)
