@@ -161,8 +161,8 @@ def GetTFIDF(CVEdocDict,CVEWeightDict):
 
     sortedFreqDict = sorted(wordFreqDict.items(),key=(lambda x:x[1]),reverse=True)
 
-#    for key,value in sortedFreqDict:
-#        print(key,"-",value/allCnt)
+    for key,value in sortedFreqDict:
+        print(key,"-",value/allCnt)
 
     sysRiskDict = dict()
     sysweightNoTimeDict = dict()

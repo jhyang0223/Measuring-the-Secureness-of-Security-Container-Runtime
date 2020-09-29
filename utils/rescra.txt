@@ -1,0 +1,308 @@
+Building container image for crawl_code
+Sending build context to Docker daemon  16.38kB
+Step 1/29 : FROM buildpack-deps:latest
+ ---> 9ee070fa9dd4
+Step 2/29 : MAINTAINER Jihyeok Yang <flash3470@gmail.com>
+ ---> Using cache
+ ---> f97c8969a3d6
+Step 3/29 : ENV DEBIAN_FRONTEND noninteractive
+ ---> Using cache
+ ---> e0d5dd15db6a
+Step 4/29 : ENV DEBCONF_NONINTERACTIVE_SEEN true
+ ---> Using cache
+ ---> d16223006cc0
+Step 5/29 : RUN apt-get update -y
+ ---> Using cache
+ ---> 4b509d0f0780
+Step 6/29 : RUN apt-get upgrade -y
+ ---> Using cache
+ ---> 3953799b8d76
+Step 7/29 : RUN apt-get install build-essential ssh -y
+ ---> Using cache
+ ---> 24ec2739c70a
+Step 8/29 : RUN apt-get install python -y
+ ---> Using cache
+ ---> 5ccfae49cfef
+Step 9/29 : RUN apt-get install vim -y
+ ---> Using cache
+ ---> 439ba4e82c1d
+Step 10/29 : RUN apt-get install net-tools -y
+ ---> Using cache
+ ---> 6a563c8500a9
+Step 11/29 : RUN apt-get install python-pip -y
+ ---> Using cache
+ ---> fbc17cd333b6
+Step 12/29 : RUN apt-get install python3-pip -y
+ ---> Using cache
+ ---> 4529717ef6c5
+Step 13/29 : RUN pip3 install bs4
+ ---> Using cache
+ ---> 73c8cb6faafb
+Step 14/29 : RUN apt-get install git -y
+ ---> Using cache
+ ---> dca72c221259
+Step 15/29 : RUN git clone https://github.com/offensive-security/exploitdb.git /opt/exploit-database
+ ---> Using cache
+ ---> 62deec9e5393
+Step 16/29 : RUN ln -sf /opt/exploit-database/searchsploit /usr/local/bin/searchsploit
+ ---> Using cache
+ ---> 25ab930b4093
+Step 17/29 : RUN cp -n /opt/exploit-database/.searchsploit_rc ~/
+ ---> Using cache
+ ---> ef932deb8f5a
+Step 18/29 : RUN ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
+ ---> Using cache
+ ---> 013fb067287e
+Step 19/29 : RUN apt-get update -y
+ ---> Using cache
+ ---> 537d17b63447
+Step 20/29 : RUN apt-get upgrade -y
+ ---> Using cache
+ ---> 4c8dbad3c007
+Step 21/29 : RUN pip3 --default-timeout=10000 install pandas
+ ---> Using cache
+ ---> f635c0357999
+Step 22/29 : RUN apt-get install gcc-multilib -y
+ ---> Using cache
+ ---> 74e2e55f51fa
+Step 23/29 : RUN pip3 --default-timeout=10000 install numpy
+ ---> Using cache
+ ---> 1046270b2141
+Step 24/29 : RUN pip3 --default-timeout=10000 install pyparsing
+ ---> Using cache
+ ---> b2f2a580a1fa
+Step 25/29 : WORKDIR /opt/exploitdb
+ ---> Using cache
+ ---> f54ea9c14955
+Step 26/29 : RUN pip3 install requests
+ ---> Using cache
+ ---> 3cdc4e0aed79
+Step 27/29 : COPY Crawl.py /root/Crawl.py
+ ---> Using cache
+ ---> e1e39e2a4325
+Step 28/29 : ENV PYTHONIOENCODING utf-8
+ ---> Using cache
+ ---> b13d787dbe13
+Step 29/29 : ENTRYPOINT ["python3", "/root/Crawl.py"]
+ ---> Using cache
+ ---> c3394d719b19
+Successfully built c3394d719b19
+Successfully tagged crawl_code:latest
+[i] Updating via Git (Expect daily updates): exploitdb ~ /opt/exploitdb
+
+
+[-] Nothing here (/opt/exploitdb). Starting fresh...
+
+[-] Missing Git remote upstream (https://github.com/offensive-security/exploitdb.git)
+Reinitialized existing Git repository in /opt/exploitdb/.git/
+
+[i] Git pull'ing
+Already up to date.
+
+[*] Git update finished
+[i] Path: /opt/exploitdb/
+[i] Updating via Git (Expect daily updates): exploitdb-papers ~ /opt/exploitdb-papers
+
+
+[-] Nothing here (/opt/exploitdb-papers). Starting fresh...
+
+[-] Missing Git remote upstream (https://github.com/offensive-security/exploitdb-papers.git)
+Reinitialized existing Git repository in /opt/exploitdb-papers/.git/
+
+[i] Git pull'ing
+Already up to date.
+
+[*] Git update finished
+[i] Path: /opt/exploitdb-papers/
+awk: line 1: regular expression compile failed (missing operand)
+^(),
+awk: line 1: regular expression compile failed (missing operand)
+^(),
+awk: line 1: regular expression compile failed (missing operand)
+^(),
+335
+37183 : ['rt_sigprocmask']
+37167 : ['rt_sigprocmask', 'lseek', 'close', 'openat']
+43010 : ['getpid', 'tgkill', 'exit_group', 'readlink', 'getgid', 'fcntl', 'close', 'socket', 'exit', 'dup', 'gettid', 'rt_sigprocmask', 'getuid', 'futex', 'munmap']
+37722 : ['rt_sigprocmask']
+32926 : ['rt_sigprocmask', 'socket']
+44304 : ['rt_sigprocmask', 'dup', 'fcntl', 'close']
+43178 : ['rt_sigprocmask', 'dup', 'write', 'fcntl', 'close']
+42273 : ['rt_sigprocmask', 'clone', 'openat', 'execve']
+42135 : ['socket']
+24747 : ['socket']
+43199 : ['getpid', 'exit', 'tgkill', 'openat', 'dup', 'sched_yield', 'exit_group', 'gettid', 'rt_sigprocmask', 'readlink', 'futex', 'nanosleep', 'fcntl', 'close', 'munmap']
+44305 : ['getpid', 'exit', 'tgkill', 'openat', 'dup', 'sched_yield', 'exit_group', 'gettid', 'rt_sigprocmask', 'readlink', 'futex', 'fcntl', 'close', 'munmap']
+39505 : ['dup', 'fcntl', 'close', 'socket']
+40731 : ['rt_sigprocmask', 'clone']
+19271 : ['getpid', 'exit', 'tgkill', 'exit_group', 'gettid', 'rt_sigprocmask', 'nanosleep', 'close', 'socket']
+19282 : ['rt_sigprocmask', 'stat', 'dup', 'nanosleep', 'fcntl', 'close', 'socket']
+19301 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close']
+19419 : ['getpid', 'fcntl', 'close', 'setgid', 'execve', 'setuid', 'dup', 'setgroups', 'rt_sigprocmask', 'getuid']
+19308 : ['openat']
+19085 : ['rt_sigprocmask', 'fcntl']
+20566 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close']
+22105 : ['mmap', 'rt_sigprocmask', 'getpid', 'openat', 'nanosleep', 'ptrace']
+237 : ['rt_sigprocmask', 'nanosleep']
+154 : ['rt_sigprocmask', 'fcntl', 'close', 'dup']
+160 : ['getpid', 'exit', 'tgkill', 'exit_group', 'gettid', 'rt_sigprocmask', 'wait4', 'futex']
+20626 : ['write', 'openat']
+21353 : ['rt_sigprocmask', 'chdir', 'mkdir', 'dup', 'fcntl', 'close']
+22813 : ['rt_sigprocmask', 'openat', 'dup', 'nanosleep', 'fcntl', 'close', 'execve']
+22458 : ['rt_sigprocmask', 'close', 'openat']
+22362 : ['getpid', 'tgkill', 'exit_group', 'wait4', 'kill', 'fcntl', 'close', 'execve', 'socket', 'exit', 'dup', 'ptrace', 'gettid', 'rt_sigprocmask', 'futex', 'nanosleep']
+22363 : ['rt_sigprocmask', 'getpid', 'dup', 'fcntl', 'alarm', 'close', 'socket']
+20979 : ['getpid', 'setreuid', 'rt_sigprocmask', 'close', 'execve']
+778 : ['setpgid', 'exit_group', 'kill', 'umask', 'fcntl', 'lseek', 'close', 'unlink', 'execve', 'setresuid', 'exit', 'dup', 'rt_sigprocmask', 'clone', 'getuid', 'pause']
+22840 : ['dup', 'lseek', 'write', 'rt_sigprocmask', 'nanosleep', 'fcntl', 'close']
+15481 : ['rt_sigprocmask', 'nanosleep', 'socket']
+21598 : ['rt_sigprocmask', 'kill', 'openat', 'nanosleep', 'execve']
+68 : ['getpid', 'recvmsg', 'poll', 'sendmsg', 'fcntl', 'close', 'getegid', 'accept', 'socket', 'sendto', 'getgroups', 'recvfrom', 'setsockopt', 'dup', 'prlimit64', 'bind', 'rt_sigprocmask', 'geteuid', 'uname', 'connect']
+131 : ['rt_sigprocmask', 'getuid', 'clock_gettime', 'brk', 'pause', 'execve', 'modify_ldt']
+686 : ['rt_sigprocmask', 'socket']
+141 : ['clone']
+142 : ['rt_sigprocmask', 'getpid', 'close']
+145 : ['getpid', 'tgkill', 'gettimeofday', 'dup2', 'exit_group', 'wait4', 'kill', 'getgid', 'lseek', 'fcntl', 'close', 'execve', 'setresuid', 'exit', 'dup', 'gettid', 'rt_sigprocmask', 'clone', 'getuid', 'futex', 'nanosleep', 'pause', 'munmap']
+375 : ['madvise', 'ftruncate', 'exit_group', 'mmap', 'kill', 'fcntl', 'close', 'exit', 'openat', 'dup', 'setpriority', 'rt_sigprocmask', 'nanosleep', 'getpriority']
+624 : ['wait4', 'lseek', 'fcntl', 'close', 'unlink', 'execve', 'dup', 'write', 'rt_sigprocmask', 'clone']
+692 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+685 : ['rt_sigprocmask', 'socketpair', 'sendmsg', 'dup', 'fcntl', 'close']
+691 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+690 : ['rt_sigprocmask', 'openat', 'dup', 'fcntl', 'close']
+744 : ['setpgid', 'exit_group', 'kill', 'umask', 'lseek', 'unlink', 'close', 'execve', 'exit', 'rt_sigprocmask', 'clone', 'getuid', 'pause']
+25289 : ['rt_sigprocmask', 'clone', 'geteuid', 'execve', 'socket']
+27461 : ['rt_sigprocmask', 'listen', 'dup', 'fcntl', 'close', 'socket']
+926 : ['rt_sigprocmask', 'getuid', 'nanosleep', 'getgid']
+895 : ['getpid', 'tgkill', 'access', 'ftruncate', 'uselib', 'exit_group', 'alarm', 'readlink', 'wait4', 'kill', 'fstat', 'unlink', 'close', 'execve', 'setresuid', 'exit', 'write', 'sched_yield', 'gettid', 'rt_sigprocmask', 'setresgid', 'clone', 'stat', 'futex', 'nanosleep', 'pause', 'munmap', 'fchmod']
+306 : ['write']
+25287 : ['fcntl', 'close', 'dup']
+25288 : ['rt_sigprocmask', 'nanosleep']
+4460 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close', 'ptrace', 'execve']
+23946 : ['nanosleep', 'getpid', 'kill']
+24043 : ['madvise', 'ftruncate', 'exit_group', 'mmap', 'kill', 'fcntl', 'close', 'exit', 'openat', 'dup', 'setpriority', 'rt_sigprocmask', 'nanosleep', 'getpriority']
+33321 : ['access', 'readlink', 'getgid', 'fstat', 'fcntl', 'close', 'execve', 'openat', 'dup', 'write', 'rt_sigprocmask', 'setresgid', 'clone', 'getuid', 'stat', 'setresuid']
+25322 : ['rt_sigprocmask', 'openat', 'dup', 'nanosleep', 'fcntl', 'close']
+904 : ['rt_sigprocmask', 'openat', 'dup', 'nanosleep', 'fcntl', 'close']
+40812 : ['set_robust_list', 'getpid', 'exit', 'tgkill', 'madvise', 'write', 'exit_group', 'gettid', 'rt_sigprocmask', 'readlink', 'futex', 'nanosleep', 'close', 'munmap', 'pipe']
+998 : ['rt_sigprocmask', 'openat', 'dup', 'fcntl', 'close']
+2004 : ['rt_sigprocmask', 'prctl', 'kill', 'chdir', 'nanosleep']
+2005 : ['setuid', 'dup', 'rt_sigprocmask', 'nanosleep', 'fcntl', 'close', 'setgid']
+2006 : ['setuid', 'rt_sigprocmask', 'prctl', 'kill', 'chdir', 'nanosleep', 'setgid']
+2031 : ['setuid', 'rt_sigprocmask', 'prctl', 'kill', 'chdir', 'nanosleep', 'setgid']
+5092 : ['access', 'close', 'rt_sigprocmask', 'setresgid', 'readlink', 'getuid', 'getgid', 'stat', 'fstat', 'setresuid', 'execve']
+2013 : ['tgkill', 'wait4', 'fcntl', 'close', 'chmod', 'execve', 'openat', 'dup', 'gettid', 'rt_sigprocmask', 'futex', 'getpid', 'madvise', 'exit_group', 'prctl', 'exit', 'setpriority', 'sched_yield', 'clone', 'getpriority']
+40810 : ['rt_sigprocmask']
+10613 : ['access', 'close', 'rt_sigprocmask', 'setresgid', 'readlink', 'getuid', 'getgid', 'stat', 'fstat', 'setresuid', 'execve']
+4893 : ['rt_sigprocmask', 'fcntl', 'close', 'ioctl']
+30902 : ['rt_sigprocmask', 'fcntl', 'close', 'ioctl']
+40611 : ['getpid', 'exit', 'madvise', 'openat', 'tgkill', 'exit_group', 'gettid', 'rt_sigprocmask', 'readlink', 'futex', 'munmap']
+40838 : ['getpid', 'madvise', 'tgkill', 'exit_group', 'readlink', 'wait4', 'exit', 'openat', 'ptrace', 'gettid', 'rt_sigprocmask', 'clone', 'futex', 'munmap']
+40839 : ['getpid', 'madvise', 'tgkill', 'exit_group', 'ioctl', 'readlink', 'wait4', 'exit', 'openat', 'ptrace', 'gettid', 'rt_sigprocmask', 'clone', 'futex', 'munmap']
+5093 : ['access', 'write', 'rt_sigprocmask', 'setresgid', 'readlink', 'getuid', 'getgid', 'stat', 'fstat', 'setresuid', 'execve']
+7405 : ['openat', 'rt_sigprocmask', 'listen', 'close', 'socket']
+8678 : ['openat', 'ptrace', 'rt_sigprocmask', 'clone', 'wait4', 'nanosleep', 'close', 'execve']
+274 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+9521 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close', 'socket']
+9352 : ['rt_sigprocmask', 'nanosleep']
+9513 : ['rt_sigprocmask', 'nanosleep', 'socket']
+10022 : ['listen', 'dup', 'fcntl', 'shutdown', 'alarm', 'close', 'socket']
+40819 : ['openat']
+40811 : ['rt_sigprocmask']
+15344 : ['rt_sigprocmask', 'fcntl', 'close', 'dup']
+18378 : ['rt_sigprocmask', 'stat', 'dup', 'fcntl', 'close', 'socket']
+15285 : ['ptrace', 'rt_sigprocmask', 'wait4', 'nanosleep', 'execve', 'socket']
+15619 : ['rt_sigprocmask', 'personality', 'execve']
+16263 : ['rt_sigprocmask', 'listen', 'nanosleep', 'socket']
+15622 : ['close']
+18080 : ['rt_sigprocmask', 'openat', 'dup', 'fcntl', 'close']
+24804 : ['rt_sigprocmask', 'clone', 'wait4', 'openat', 'dup', 'fcntl', 'close']
+33193 : ['getpid', 'exit', 'tgkill', 'exit_group', 'gettid', 'rt_sigprocmask', 'kill', 'nanosleep', 'execve']
+10017 : []
+35013 : ['inotify_init']
+35600 : ['inotify_init']
+34987 : ['rt_sigprocmask', 'nanosleep', 'socket']
+33635 : ['getpid', 'tgkill', 'exit_group', 'readlink', 'fcntl', 'close', 'socket', 'exit', 'openat', 'dup', 'gettid', 'rt_sigprocmask', 'futex', 'munmap']
+33322 : ['getpid', 'access', 'readlink', 'getgid', 'fstat', 'fcntl', 'close', 'execve', 'openat', 'dup', 'rt_sigprocmask', 'setresgid', 'clone', 'getuid', 'stat', 'setresuid']
+33148 : []
+32682 : ['getpid', 'exit', 'tgkill', 'exit_group', 'gettid', 'rt_sigprocmask', 'clone', 'wait4', 'futex', 'execve']
+37543 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+32829 : ['rt_sigprocmask', 'write', 'dup', 'fcntl', 'close']
+32805 : ['rt_sigprocmask', 'close', 'socket']
+33015 : ['nanosleep', 'splice', 'pipe']
+25202 : ['sync', 'access', 'readlink', 'fstat', 'close', 'execve', 'sendto', 'rt_sigprocmask', 'setresgid', 'stat', 'epoll_create', 'setresuid']
+30605 : ['rt_sigprocmask', 'close', 'openat']
+34001 : ['rt_sigprocmask', 'ioctl', 'openat']
+32815 : ['exit_group', 'fcntl', 'close', 'setgid', 'setuid', 'exit', 'dup', 'clone', 'nanosleep']
+35403 : ['pipe', 'write', 'epoll_create']
+26749 : ['openat', 'dup', 'fcntl', 'close']
+35404 : ['dup', 'fcntl', 'close', 'epoll_create']
+26811 : ['getpid', 'exit', 'tgkill', 'dup', 'exit_group', 'gettid', 'rt_sigprocmask', 'pwrite64', 'futex', 'fcntl', 'close']
+24696 : ['rt_sigprocmask']
+26382 : ['getpid', 'close', 'socket']
+29781 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+35820 : ['fcntl', 'close', 'dup']
+29916 : ['getpid']
+30604 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close', 'ptrace', 'execve']
+27031 : ['write']
+26489 : ['getpid', 'close', 'socket']
+26648 : ['openat', 'dup', 'fcntl', 'close']
+30080 : ['rt_sigprocmask', 'openat']
+38390 : ['setuid', 'getpid', 'exit', 'mkdir', 'tgkill', 'dup', 'write', 'exit_group', 'gettid', 'rt_sigprocmask', 'wait4', 'futex', 'chown', 'nanosleep', 'fcntl', 'close', 'chmod', 'execve']
+17769 : ['rt_sigprocmask', 'fcntl', 'close', 'ioctl']
+36294 : ['pipe2', 'exit', 'openat', 'exit_group', 'dup2', 'rt_sigprocmask', 'clone', 'nanosleep', 'fcntl', 'close', 'execve']
+38589 : ['rt_sigprocmask', 'dup', 'fcntl', 'close']
+41350 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close']
+41995 : ['dup', 'write', 'rt_sigprocmask', 'nanosleep', 'fcntl', 'close', 'execve']
+33824 : ['openat']
+36743 : ['openat', 'write', 'rt_sigprocmask', 'close', 'pipe']
+36267 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+36268 : ['rt_sigprocmask', 'openat', 'dup', 'fcntl', 'close']
+36266 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close']
+19605 : ['rt_sigprocmask', 'listen', 'epoll_create', 'nanosleep', 'close', 'socket']
+37937 : ['rt_sigprocmask', 'fcntl', 'close', 'dup']
+39214 : ['rt_sigprocmask', 'openat']
+31305 : ['rt_sigprocmask', 'dup', 'fcntl', 'close', 'socket']
+39308 : ['rt_sigprocmask', 'socket']
+47163 : ['getpid', 'pipe2', 'exit', 'exit_group', 'dup2', 'rt_sigprocmask', 'prctl', 'clone', 'nanosleep', 'fcntl', 'close', 'execve']
+42048 : ['rt_sigprocmask']
+44303 : ['pipe2', 'exit', 'openat', 'dup2', 'exit_group', 'rt_sigprocmask', 'clone', 'nanosleep', 'fcntl', 'close', 'execve']
+43127 : ['getpid', 'exit', 'tgkill', 'openat', 'dup', 'exit_group', 'ioctl', 'gettid', 'rt_sigprocmask', 'readlink', 'clone', 'prctl', 'futex', 'nanosleep', 'fcntl', 'close', 'munmap']
+46208 : ['rt_sigprocmask']
+43029 : ['exit', 'dup', 'exit_group', 'rt_sigprocmask', 'clone', 'fcntl', 'close', 'execve']
+39230 : ['getpid', 'tgkill', 'dup2', 'exit_group', 'umount2', 'newfstatat', 'wait4', 'chdir', 'fstat', 'fcntl', 'lseek', 'unlink', 'chmod', 'close', 'execve', 'nanosleep', 'exit', 'mkdir', 'openat', 'write', 'mount', 'lstat', 'gettid', 'getcwd', 'rt_sigprocmask', 'clone', 'rmdir', 'stat', 'futex', 'fchdir']
+46529 : ['rt_sigprocmask', 'close', 'ioctl', 'openat']
+46006 : ['rt_sigprocmask', 'sendmsg', 'nanosleep', 'close', 'socket']
+41457 : ['listen', 'shutdown', 'close', 'socket']
+41458 : ['socketpair', 'openat', 'dup', 'rt_sigprocmask', 'clone', 'getuid', 'getgid', 'nanosleep', 'fcntl', 'close', 'execve', 'socket']
+39277 : ['clone', 'dup', 'nanosleep', 'fcntl', 'close', 'execve']
+40003 : ['dup', 'rt_sigprocmask', 'clone', 'nanosleep', 'fcntl', 'close', 'execve']
+45919 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close', 'socket']
+41886 : ['close', 'socket']
+12 : ['getpid', 'exit', 'tgkill', 'openat', 'dup', 'setpgid', 'exit_group', 'gettid', 'ptrace', 'rt_sigprocmask', 'wait4', 'kill', 'futex', 'umask', 'unlink', 'setsid', 'fcntl', 'close']
+7091 : ['rt_sigprocmask', 'clone', 'close']
+4756 : ['rt_sigprocmask', 'clone', 'geteuid', 'execve', 'socket']
+9363 : ['rt_sigprocmask', 'nanosleep', 'openat']
+1880 : ['rt_sigprocmask', 'fcntl', 'close', 'dup']
+9575 : ['rt_sigprocmask', 'close', 'socket']
+4172 : ['dup', 'write', 'rt_sigprocmask', 'fcntl', 'close', 'socket']
+6851 : ['rt_sigprocmask', 'openat', 'ftruncate', 'close', 'munmap', 'execve']
+7618 : ['rt_sigprocmask', 'socket']
+33523 : ['getpid', 'exit', 'tgkill', 'openat', 'exit_group', 'gettid', 'rt_sigprocmask', 'close', 'execve']
+9442 : ['rt_sigprocmask']
+10202 : ['rt_sigprocmask', 'openat']
+9543 : ['rt_sigprocmask', 'nanosleep', 'socket']
+15774 : ['rt_sigprocmask', 'futimesat', 'execve', 'utimensat']
+16952 : ['rt_sigprocmask', 'socket']
+34923 : ['rt_sigprocmask', 'openat', 'dup', 'lseek', 'fcntl', 'close', 'execve']
+26131 : ['rt_sigprocmask', 'nanosleep', 'close', 'alarm', 'munmap', 'execve']
+25450 : ['rt_sigprocmask', 'getpid', 'clone', 'execve']
+42136 : []
+43345 : ['getpid', 'exit', 'tgkill', 'timerfd_create', 'dup', 'exit_group', 'gettid', 'rt_sigprocmask', 'readlink', 'futex', 'nanosleep', 'fcntl', 'close', 'munmap']
+45553 : ['rt_sigprocmask', 'dup', 'nanosleep', 'fcntl', 'close', 'execve']
+42932 : ['rt_sigprocmask', 'getpid', 'close', 'socket']
+44325 : ['rt_sigprocmask', 'close']
+44579 : ['sendto', 'socket']
+44301 : ['rt_sigprocmask', 'write', 'openat', 'dup', 'fcntl', 'close', 'munmap', 'socket']
+911 : ['dup', 'write', 'rt_sigprocmask', 'fcntl', 'close']
+32751 : []
+rm: cannot remove '/opt/volume/exploitDict*': No such file or directory

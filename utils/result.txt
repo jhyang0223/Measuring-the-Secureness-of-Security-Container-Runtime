@@ -1,0 +1,173 @@
+Building container image for risk_generator
+Sending build context to Docker daemon  10.75kB
+Step 1/22 : FROM ubuntu:latest
+ ---> ccc6e87d482b
+Step 2/22 : MAINTAINER Jihyeok Yang <flash3470@gmail.com>
+ ---> Using cache
+ ---> 8aad2ac6ada8
+Step 3/22 : ENV DEBIAN_FRONTEND noninteractive
+ ---> Using cache
+ ---> 209a0aec5595
+Step 4/22 : ENV DEBCONF_NONINTERACTIVE_SEEN true
+ ---> Using cache
+ ---> 3e07c7e2361c
+Step 5/22 : RUN apt-get update -y
+ ---> Using cache
+ ---> 36df29956615
+Step 6/22 : RUN apt-get update -y
+ ---> Using cache
+ ---> 5f39261b8620
+Step 7/22 : RUN apt-get upgrade -y
+ ---> Using cache
+ ---> e9535fcf65f7
+Step 8/22 : RUN apt-get install build-essential ssh -y
+ ---> Using cache
+ ---> 2d1ac9a37e83
+Step 9/22 : RUN apt-get install python -y
+ ---> Using cache
+ ---> 0aab62b1eb3c
+Step 10/22 : RUN apt-get install vim -y
+ ---> Using cache
+ ---> fca622f3db69
+Step 11/22 : RUN apt-get install net-tools -y
+ ---> Using cache
+ ---> ecb0519ce63d
+Step 12/22 : RUN apt-get install python3-pip -y
+ ---> Using cache
+ ---> 02fae204ee77
+Step 13/22 : RUN apt-get install git -y
+ ---> Using cache
+ ---> cce97348c283
+Step 14/22 : RUN apt-get update -y
+ ---> Using cache
+ ---> 404aa09317a2
+Step 15/22 : RUN apt-get upgrade -y
+ ---> Using cache
+ ---> d1ab52f6d52f
+Step 16/22 : RUN pip3 --default-timeout=10000 install pandas
+ ---> Using cache
+ ---> d8062199f62b
+Step 17/22 : RUN pip3 --default-timeout=10000 install numpy
+ ---> Using cache
+ ---> 4093382d6377
+Step 18/22 : RUN pip3 --default-timeout=10000 install bs4
+ ---> Using cache
+ ---> 7bab6374f70e
+Step 19/22 : WORKDIR /opt/exploitdb
+ ---> Using cache
+ ---> 1373b8d6bc1b
+Step 20/22 : COPY RiskGenerator.py /root/RiskGenerator.py
+ ---> Using cache
+ ---> 5717346b7682
+Step 21/22 : ENV PYTHONIOENCODING utf-8
+ ---> Using cache
+ ---> ac03a66b2c02
+Step 22/22 : ENTRYPOINT ["python3", "/root/RiskGenerator.py"]
+ ---> Using cache
+ ---> a19bae743292
+Successfully built a19bae743292
+Successfully tagged risk_generator:latest
+rt_sigprocmask - 0.12060967528164347
+close - 0.09410205434062292
+fcntl - 0.07024519549370443
+dup - 0.06295559973492379
+execve - 0.04638833664678595
+socket - 0.04572564612326044
+nanosleep - 0.0437375745526839
+openat - 0.04241219350563287
+getpid - 0.02982107355864811
+clone - 0.026507620941020542
+exit - 0.026507620941020542
+exit_group - 0.026507620941020542
+write - 0.021206096752816435
+gettid - 0.019880715705765408
+tgkill - 0.019880715705765408
+futex - 0.01656726308813784
+getuid - 0.015904572564612324
+readlink - 0.015904572564612324
+munmap - 0.013253810470510271
+wait4 - 0.012591119946984758
+getgid - 0.011928429423459244
+kill - 0.011928429423459244
+setresuid - 0.010603048376408217
+stat - 0.010603048376408217
+fstat - 0.009940357852882704
+ptrace - 0.009940357852882704
+access - 0.008614976805831677
+lseek - 0.008614976805831677
+setresgid - 0.008614976805831677
+ioctl - 0.00728959575878065
+listen - 0.005964214711729622
+setuid - 0.005301524188204109
+unlink - 0.005301524188204109
+alarm - 0.004638833664678595
+chdir - 0.004638833664678595
+dup2 - 0.004638833664678595
+madvise - 0.004638833664678595
+pipe - 0.004638833664678595
+sendto - 0.004638833664678595
+pause - 0.003976143141153081
+setgid - 0.003976143141153081
+chmod - 0.0033134526176275677
+epoll_create - 0.0033134526176275677
+mkdir - 0.0033134526176275677
+pipe2 - 0.0033134526176275677
+syslog - 0.0033134526176275677
+ftruncate - 0.0026507620941020544
+prctl - 0.0026507620941020544
+accept - 0.0019880715705765406
+mmap - 0.0019880715705765406
+sched_yield - 0.0019880715705765406
+sendmsg - 0.0019880715705765406
+setpgid - 0.0019880715705765406
+setpriority - 0.0019880715705765406
+umask - 0.0019880715705765406
+umount2 - 0.0019880715705765406
+chown - 0.0013253810470510272
+geteuid - 0.0013253810470510272
+getpriority - 0.0013253810470510272
+gettimeofday - 0.0013253810470510272
+inotify_init - 0.0013253810470510272
+prlimit64 - 0.0013253810470510272
+pwrite64 - 0.0013253810470510272
+setgroups - 0.0013253810470510272
+setsid - 0.0013253810470510272
+shutdown - 0.0013253810470510272
+socketpair - 0.0013253810470510272
+splice - 0.0013253810470510272
+sync - 0.0013253810470510272
+uname - 0.0013253810470510272
+bind - 0.0006626905235255136
+brk - 0.0006626905235255136
+capset - 0.0006626905235255136
+clock_getres - 0.0006626905235255136
+clock_gettime - 0.0006626905235255136
+connect - 0.0006626905235255136
+fchdir - 0.0006626905235255136
+fchmod - 0.0006626905235255136
+futimesat - 0.0006626905235255136
+getcwd - 0.0006626905235255136
+getegid - 0.0006626905235255136
+getgroups - 0.0006626905235255136
+inotify_init1 - 0.0006626905235255136
+lstat - 0.0006626905235255136
+modify_ldt - 0.0006626905235255136
+mount - 0.0006626905235255136
+newfstatat - 0.0006626905235255136
+personality - 0.0006626905235255136
+poll - 0.0006626905235255136
+pread64 - 0.0006626905235255136
+recvfrom - 0.0006626905235255136
+recvmsg - 0.0006626905235255136
+rename - 0.0006626905235255136
+rmdir - 0.0006626905235255136
+sendfile - 0.0006626905235255136
+set_robust_list - 0.0006626905235255136
+setsockopt - 0.0006626905235255136
+shmat - 0.0006626905235255136
+shmdt - 0.0006626905235255136
+shmget - 0.0006626905235255136
+sysinfo - 0.0006626905235255136
+timerfd_create - 0.0006626905235255136
+uselib - 0.0006626905235255136
+utimensat - 0.0006626905235255136
