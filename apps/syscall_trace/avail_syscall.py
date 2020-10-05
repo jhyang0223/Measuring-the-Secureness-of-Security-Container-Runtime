@@ -165,12 +165,12 @@ def SaveDict(targetDict,path):
     with open(path,"wb") as f:
         pickle.dump(targetDict, f)
 
-def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, hostSyscallCntDict, progSyscallCntDict):
+def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDict):
     detailFile = open("/opt/volume/syscall_use.csv","w")
 #    print(linux_syscallDict.values())
-    detailFile.write('system call,host,program,security container\n')
+    detailFile.write('system call,program,security container\n')
     for syscall in linux_syscallDict.values():
-        record = syscall + "," + str(hostSyscallCntDict.get(syscall,0)) + "," + str(progSyscallCntDict.get(syscall,0)) +"," + str(scSyscallCntDict.get(syscall,0)) + "\n"
+        record = syscall + ","  + str(progSyscallCntDict.get(syscall,0)) +"," + str(scSyscallCntDict.get(syscall,0)) + "\n"
         detailFile.write(record)
     detailFile.close()
     
@@ -220,20 +220,20 @@ if __name__ == "__main__":
     print("security container runtime system call tracing file function cnt...")
     BigFileSplit("/opt/volume/security_container/*")
     BigFileSplit("/opt/volume/program/*")
-    BigFileSplit("/opt/volume/host/*")
+#    BigFileSplit("/opt/volume/host/*")
     scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/*.txt",linux_syscallDict)
     
-    print("test program system call tracing file function cnt...")
-    hostSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*",linux_syscallDict)
+#    print("test program system call tracing file function cnt...")
+#    hostSyscallCntDict = MakeSyscallCntDict_host("/opt/volume/host/*",linux_syscallDict)
     print("test program in container system call tracing file function cnt by strace...")
     progSyscallCntDict = MakeSyscallCntDict_program("/opt/volume/program/*",linux_syscallDict)
 
-    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, hostSyscallCntDict,linux_syscallDict)
+    availSyscallDict = MakeAvailSyscallDict(scSyscallCntDict, progSyscallCntDict,linux_syscallDict)
 #    print(availSyscallDict)
 
     availSyscallSavePath = "/opt/volume/availSyscallDict.sav"
     SaveDict(availSyscallDict, availSyscallSavePath)
-    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, hostSyscallCntDict,progSyscallCntDict)    
+    SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDict)    
 
     procInfoDictPath = "/opt/volume/security_container/procInfoDict.sav"
     if os.path.exists(procInfoDictPath):
