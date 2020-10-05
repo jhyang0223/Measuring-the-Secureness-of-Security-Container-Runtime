@@ -35,16 +35,22 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
     forkCompiled = re.compile(forkT)
 
     syscallCntDict = dict()
-    
+    ret_1CntDict = dict()
+
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
             for ftraceLine in ftraceFile.readlines():
                 sys_exitRet = sys_exitCompiled.search(ftraceLine)
                 if sys_exitRet != None:
                     syscallNum = sys_exitRet.group(1)
+                    retVal = sys_exitRet.group(2)
                     if int(syscallNum) > len(linux_syscallDict):
                         continue
                     syscall = linux_syscallDict[syscallNum]
+                    if retVal == "-1":
+                        if ret_1CntDict.get(syscall) == None:
+                            ret_1CntDict[syscall] = 0
+                        syscallCntDict[syscall] +=1
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
                         syscallCntDict[syscall] =0
@@ -64,6 +70,9 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
     tgidChildDict = dict()
     tgidSyscallCntDict = dict()
     cmt =0
+
+    ret_1CntDict = dict()
+
     for ftraceFileName in glob.glob(ftraceFilePath):
         with open(ftraceFileName,"r") as ftraceFile:
             cmt += 1
@@ -74,19 +83,27 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
                 if sys_exitRet != None:
                     tgid = sys_exitRet.group(1)
                     syscallNum = sys_exitRet.group(2)
+                    retVal  = sys_exitRet.group(3) 
+                    
+                        
                     if int(syscallNum) > len(linux_syscallDict):
                         continue  
                     syscall = linux_syscallDict[syscallNum]
-                    if syscallCntDict.get(syscall) == None:
-#                        print(syscall)
-                        syscallCntDict[syscall] =0
-                    syscallCntDict[syscall]+=1
+                    if retVal == "-1":
+                        if ret_1CntDict.get(syscall) == None:
+                            ret_1CntDict[syscall] = 0
+                        ret_1CntDict[syscall] +=1
+                    else:
+                        if syscallCntDict.get(syscall) == None:
+#                            print(syscall)
+                            syscallCntDict[syscall] = 0
+                        syscallCntDict[syscall]+=1
 
-                    if tgidSyscallCntDict.get(tgid) == None:
-                        tgidSyscallCntDict[tgid] = dict()
-                    if tgidSyscallCntDict[tgid].get(syscall) == None:
-                        tgidSyscallCntDict[tgid][syscall] = 0
-                    tgidSyscallCntDict[tgid][syscall] += 1
+                        if tgidSyscallCntDict.get(tgid) == None:
+                            tgidSyscallCntDict[tgid] = dict()
+                        if tgidSyscallCntDict[tgid].get(syscall) == None:
+                            tgidSyscallCntDict[tgid][syscall] = 0
+                        tgidSyscallCntDict[tgid][syscall] += 1
                     continue
 
                 forkRet = forkCompiled.search(ftraceLine.strip('\n'))
@@ -100,16 +117,22 @@ def MakeSyscallCntDict_SCR(ftraceFilePath,linux_syscallDict):
     return syscallCntDict, tgidChildDict, tgidSyscallCntDict
 
 def MakeSyscallCntDict_program(straceFilePath, linux_syscallDict):
-    straceT = "([a-zA-Z0-9_]+)\(.*\)\s+=\s+[-0-9]+"
+    straceT = "([a-zA-Z0-9_]+)\(.*\)\s+=\s+([-0-9]+)"
     straceCompiled = re.compile(straceT)
     syscallCntDict = dict()
-    
+    ret_1CntDict = dict()
+
     for straceFileName in glob.glob(straceFilePath):
         with open(straceFileName,"r") as straceFile:
             for straceLine in straceFile.readlines():
                 retMatch = straceCompiled.match(straceLine)
                 if retMatch !=None:
                     syscall = retMatch.group(1)
+                    retVal = retMatch.group(2)
+                    if retVal == "-1":
+                        if ret_1CntDict.get(syscall) == None:
+                            ret_1CntDict[syscall] = 0
+                        ret_1CntDict[syscall] +=1
                     if syscallCntDict.get(syscall) == None:
                         syscallCntDict[syscall] = 0
                     syscallCntDict[syscall] += 1
@@ -175,17 +198,22 @@ def PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict):
 def BigFileSplit(dirPath):
     cmd = "find "+dirPath +" -size +1000000k"
     #bigFileList = ["/opt/volume/security_container/epoll.txt", "/opt/volume/security_container/fork.txt", ...]
-    bigFileList = subprocess.check_output(cmd,shell=True).decode().strip("\n").split("\n")
-    print(bigFileList)
-    #bigFile = "/opt/volume/security_container/epoll.txt"
-    for bigFile in bigFileList: 
-        filePrefix = bigFile.strip(".txt") # filePrefix = "/opt/volume/security_container/epoll"
-        cmd = 'split -l 300000 --additional-suffix=.txt '+ bigFile + " " + filePrefix +"_"
-        os.system(cmd)
-        cmd = "rm "+ bigFile
-        os.system(cmd)
-        print("rm ",bigFile)
+    try:
+        cmdOut = subprocess.check_output(cmd,shell=True)
+        bigFileList = cmdOut.decode().strip('\n').split('\n')
+        print(bigFileList)
+        #bigFile = "/opt/volume/security_container/epoll.txt"
+        for bigFile in bigFileList:
+            filePrefix = bigFile.strip(".txt") # filePrefix = "/opt/volume/security_container/epoll"
+            cmd = 'split -l 300000 --additional-suffix=.txt '+ bigFile + " " + filePrefix +"_"
+            os.system(cmd)
+            cmd = "rm "+ bigFile
+            os.system(cmd)
+            print("rm ",bigFile)
+    except subprocess.CalledProcessError:
+        print("There is big file in this directory")
 
+    
 if __name__ == "__main__":
 
     linux_syscallDict = GetLinuxSyscallDict()
