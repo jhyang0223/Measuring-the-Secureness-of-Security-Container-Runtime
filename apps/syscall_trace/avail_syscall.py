@@ -50,7 +50,7 @@ def MakeSyscallCntDict_host(ftraceFilePath,linux_syscallDict):
                     if retVal == "-1":
                         if ret_1CntDict.get(syscall) == None:
                             ret_1CntDict[syscall] = 0
-                        syscallCntDict[syscall] +=1
+                        ret_1CntDict[syscall] +=1
                     if syscallCntDict.get(syscall) == None:
 #                        print(syscall)
                         syscallCntDict[syscall] =0
