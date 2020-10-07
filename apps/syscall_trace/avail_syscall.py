@@ -174,21 +174,37 @@ def SyscallUsageDetailInfo(linux_syscallDict, scSyscallCntDict, progSyscallCntDi
         detailFile.write(record)
     detailFile.close()
     
-def PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict):
-    for tgid, syscallCntDict  in tgidSyscallCntDict.items():
-        tgidInfo = ''
-        for procInfo,procList in  procInfoDict.items():
-            if tgid in procList:
-                tgidInfo = procInfo
-                break
-        if tgidInfo == '':
-            for parent_tgid, childList in tgidChildDict.items():
-                if tgid in childList:
-                    tgidInfo = 'child of ' + parent_tgid
-                    break
+def PrintSyscallCntByProc(linux_syscallDict,tgidChildDict, tgidSyscallCntDict, procInfoDict):
+    perProcFile = open('/opt/volume/perProc_use.csv',"w")
+    tgidList = tgidSyscallCntDict.keys()
+    tgidStr = ''
+    for tgid in tgidList:
+        tgidStr += tgid + ","
+    tgidStr +="\n"
+    perProcFile.write(tgidStr)
 
-        if tgidInfo == '':
-            continue
+    for syscall in linux_syscallDict.values():
+        record = syscall + ","
+        for tgid in tgidList:
+            record += str(tgidSyscallCntDict[tgid].get(syscall,0)) + ","
+        record += "\n"
+
+        perProcFile.write(record)
+    perProcFile.close()
+#    for tgid, syscallCntDict  in tgidSyscallCntDict.items():
+#        tgidInfo = ''
+#        for procInfo,procList in  procInfoDict.items():
+#            if tgid in procList:
+#                tgidInfo = procInfo
+#                break
+#        if tgidInfo == '':
+#            for parent_tgid, childList in tgidChildDict.items():
+#                if tgid in childList:
+#                    tgidInfo = 'child of ' + parent_tgid
+#                    break
+
+#        if tgidInfo == '':
+#            continue
 
 #        print("**",tgid,tgidInfo,"**")
 #        print(syscallCntDict)
@@ -213,14 +229,34 @@ def BigFileSplit(dirPath):
     except subprocess.CalledProcessError:
         print("There is big file in this directory")
 
-    
-if __name__ == "__main__":
+def processCmdInfo():
+    psT = '/opt/volume/ps/(.+).txt'
+    psCompiled = re.compile(psT)
+    psDict = dict()
 
+    for psFileName in glob.glob("/opt/volume/ps/*"):
+        retMatch = psCompiled.match(psFileName)
+        syscall = retMatch.group(1)
+        psDict[syscall] = dict()
+        with open(psFileName,"r") as psFile:
+            for psLine in psFile.readlines():
+                oneProcessInfo = psLine.strip('\n').split() # pid,tgid,ppid,cmd
+                pid = oneProcessInfo[0]
+                psDict[syscall][pid] = dict()
+                psDict[syscall][pid]['tgid'] = oneProcessInfo[1]
+                psDict[syscall][pid]['ppid'] = oneProcessInfo[2]
+                psDict[syscall][pid]['cmd'] = oneProcessInfo[3]
+                
+    return psDict
+
+
+if __name__ == "__main__":
     linux_syscallDict = GetLinuxSyscallDict()
     print("security container runtime system call tracing file function cnt...")
     BigFileSplit("/opt/volume/security_container/*")
     BigFileSplit("/opt/volume/program/*")
 #    BigFileSplit("/opt/volume/host/*")
+#    psDict = processCmdInfo()
     scSyscallCntDict, tgidChildDict, tgidSyscallCntDict = MakeSyscallCntDict_SCR("/opt/volume/security_container/*.txt",linux_syscallDict)
     
 #    print("test program system call tracing file function cnt...")
@@ -243,5 +279,5 @@ if __name__ == "__main__":
         print("no /opt/volume/security_container/procInfoDict.sav")
         exit(1)
         
-    PrintSyscallCntByProc(tgidChildDict, tgidSyscallCntDict, procInfoDict)
+    PrintSyscallCntByProc(linux_syscallDict,tgidChildDict, tgidSyscallCntDict, procInfoDict)
     
