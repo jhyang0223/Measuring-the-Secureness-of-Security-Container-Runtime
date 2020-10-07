@@ -168,9 +168,12 @@ if __name__ == "__main__":
 
     os.system("mkdir -p /opt/volume/host")
     os.system("mkdir -p /opt/volume/program")
+    os.system("mkdir -p /opt/volume/ps")
+  
     os.system('rm /opt/volume/syscall_list.txt')
     os.system('rm /opt/volume/security_container/*')
     os.system('rm /opt/volume/program/*')
+    os.system('rm /opt/volume/ps/*')
     
     print('Building container image for ' + image)
     
@@ -188,7 +191,11 @@ if __name__ == "__main__":
     #start up and end time system call tracing
 #    cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image    
     cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+    os.system(cmd)
+
+    cmd = 'ps -eL -o pid,tgid,ppid,cmd > /opt/volume/ps/StartExit.txt'
     os.system(cmd)    
+
     os.system('sudo docker stop '+ image)
     os.system('sudo docker rm '+ image)
 
@@ -209,6 +216,9 @@ if __name__ == "__main__":
                 cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
             else:
                 cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
+            os.system(cmd)
+
+            cmd = 'ps -eL -o pid,tgid,ppid,cmd > /opt/volume/ps/' + syscall + '.txt'
             os.system(cmd)
 
             if runtime == "runc":
@@ -235,16 +245,19 @@ if __name__ == "__main__":
 #                os.system(cmd)
 #                time.sleep(1)
 
+            startTime = time.time()
 
             #Test Program Start
             cmd = 'sudo docker exec -it '+image+' bash -c "./test_script.sh ' + syscall  + ' "'
             os.system(cmd)
+            endTime = time.time()
             time.sleep(2) 
             SaveTrace(syscall+'.txt')
             os.system('sudo docker stop '+ image)
             os.system('sudo docker rm '+ image)
             syscall_list.append(syscall)
     
+            
     if mode == "full":
         if runtime == "runc":
             cmd = 'sudo docker run -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
@@ -252,12 +265,16 @@ if __name__ == "__main__":
             cmd = 'sudo docker run --runtime='+runtime+' -d -t -h '+image+' -v '+volume_opt+' --cap-add SYS_PTRACE --name '+ image +' ' + image
         os.system(cmd)
 
+        cmd = 'ps -eL -o pid,tgid,ppid,cmd > /opt/volume/ps/ipc.txt'
+        os.system(cmd)
+
+
         if runtime == "runc":
             cmd = "pstree -ap | grep 'containerd-shim' | cut -d',' -f 2 | awk '{print $1}'"
         elif runtime == "runsc":
-            cmd = "ps -ef | grep -e 'runsc' -e 'containerd-shim' |  awk '{print $2}'"
+            cmd = "ps -ef | grep 'containerd-shim' |  awk '{print $2}'"
         elif runtime == "kata-runtime":
-            cmd = "ps -ef | grep -e 'kata-runtime' -e 'containerd-shim' | awk '{print $2}'"
+            cmd = "ps -ef | grep 'containerd-shim' | awk '{print $2}'"
         target_ppid_string = GetPidString(cmd) # tgid
         target_ppid_list = target_ppid_string.strip(" ").split(" ") #tgid list
         target_pid_string = GetPidFromPpid(target_ppid_list)
@@ -373,3 +390,4 @@ if __name__ == "__main__":
             os.system(cmd)
     
     '''        
+    print("elapsedTime",str(endTime - startTime))
