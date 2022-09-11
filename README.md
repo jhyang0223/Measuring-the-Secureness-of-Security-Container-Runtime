@@ -27,3 +27,5 @@ runtimes quantitatively. While the proposed model uses a new method of combining
 exposure of host system calls with various external vulnerability metrics. With the proposed technique,
 we measure and compare the security of runC (Docker default Runtime) and two representative Security
 Container Runtimes, gVisor, and Kata container.
+##System Architecture
+![System Architecture](https://user-images.githubusercontent.com/44808660/189523110-e1914462-c965-42d0-be78-6b1be7e67062.png)
